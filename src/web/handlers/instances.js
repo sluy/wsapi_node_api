@@ -6,7 +6,7 @@ const {
   all,
 } = require("../../repositories/instances.js");
 
-const optionsAction = async (req, res) => {
+const headAction = async (req, res) => {
   res.json({
     status: true,
     data: await all(req.client.id),
@@ -95,7 +95,7 @@ const deleteAction = async (req, res) => {
 };
 
 module.exports = {
-  optionsAction,
+  headAction,
   getAction,
   postAction,
   putAction,

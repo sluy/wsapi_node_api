@@ -5,37 +5,6 @@ const md5 = require("md5");
 const { DateTime } = require("luxon");
 const { isAxiosError } = require("axios");
 
-async function update(search, name, info, clientId) {
-  const i = await find(search, null, clientId);
-  if (!i) {
-    return "instance.update.error.not_found";
-  }
-  if (typeof name === "number") {
-    name = name.trim();
-  }
-  if (typeof info === "number") {
-    info = info.trim();
-  }
-  name = typeof name !== "string" ? "" : name.trim();
-  info = typeof info !== "string" ? "" : info.trim();
-  if (name === "") {
-    return "instance.update.error.name.invalid";
-  }
-  const exists = await db("wsapi_instances")
-    .where("client_id", clientId)
-    .where("name", name)
-    .first();
-  if (exists && exists.id !== i.id) {
-    return "instance.update.error.name.exists";
-  }
-  const instance = await db("wsapi_instances").where("id", i.id).update({
-    name,
-    info,
-    updated_at: DateTime.now().toSQL(),
-  });
-  return await injectApiInfo(instance);
-}
-
 async function all(clientId) {
   const instances = await db("wsapi_instances")
     .where("client_id", clientId)
@@ -98,6 +67,37 @@ async function create(name, info, clientId) {
     console.log(error);
     return "instance.save.error.api.internal";
   }
+}
+
+async function update(search, name, info, clientId) {
+  const i = await find(search, null, clientId);
+  if (!i) {
+    return "instance.update.error.not_found";
+  }
+  if (typeof name === "number") {
+    name = name.trim();
+  }
+  if (typeof info === "number") {
+    info = info.trim();
+  }
+  name = typeof name !== "string" ? "" : name.trim();
+  info = typeof info !== "string" ? "" : info.trim();
+  if (name === "") {
+    return "instance.update.error.name.invalid";
+  }
+  const exists = await db("wsapi_instances")
+    .where("client_id", clientId)
+    .where("name", name)
+    .first();
+  if (exists && exists.id !== i.id) {
+    return "instance.update.error.name.exists";
+  }
+  const instance = await db("wsapi_instances").where("id", i.id).update({
+    name,
+    info,
+    updated_at: DateTime.now().toSQL(),
+  });
+  return await injectApiInfo(instance);
 }
 
 async function drop(value, field, clientId) {
@@ -226,4 +226,4 @@ async function injectStatus(instance) {
   }
   return instance;
 }
-module.exports = { all, get, create, update, drop };
+module.exports = { all, find, create, update, drop };

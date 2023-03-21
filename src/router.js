@@ -15,6 +15,7 @@ const middlewares = {
 };
 
 async function router(req, res, defaultRoute) {
+  console.log("running method ", req.method);
   req.input = (key, defaultValue) => {
     for (const current of [req.body, req.query]) {
       if (typeof current === "object" && current !== null) {
