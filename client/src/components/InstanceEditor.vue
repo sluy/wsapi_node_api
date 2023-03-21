@@ -5,6 +5,7 @@ import { api } from '../utils/api';
 import { isAxiosError } from 'axios';
 
 import ModalWindow from './ModalWindow.vue';
+import LoadingWindow from './LoadingWindow.vue';
 
 const props = defineProps({
   modelValue: Object,
@@ -12,6 +13,8 @@ const props = defineProps({
 });
 const emit = defineEmits(['saved', 'error', 'update:open']);
 const errorMessage = ref(null);
+
+const busy = ref(false);
 
 const isOpen = computed({
   get: () => props.open,
@@ -28,6 +31,7 @@ watch(model.value, () => {
 });
 
 const save = async () => {
+  busy.value = true;
   try {
     const res = await api.post('instances', model.value);
     emit('saved', res);
@@ -40,6 +44,7 @@ const save = async () => {
     }
     emit('error', error);
   }
+  busy.value = false;
 }
 </script>
 <template>
@@ -85,4 +90,5 @@ const save = async () => {
         />
       </div>
   </ModalWindow>
+  <LoadingWindow v-model="busy"/>
 </template>

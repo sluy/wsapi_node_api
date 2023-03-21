@@ -1,3 +1,4 @@
+const { isAxiosError } = require("axios");
 const { api } = require("../bootstrap/api.js");
 const { get } = require("./config.js");
 
@@ -60,35 +61,40 @@ const send = async (clientId, config) => {
   }
 };
 
-export const sendText = async (instance, config) => {
-  const message = valueToString(config.value);
+const sendText = async (instance, config) => {
+  const headers = {
+    "x-instance-id": instance.code,
+    "x-instance-secret": instance.secret,
+  };
+  const data = {
+    message: valueToString(config.message),
+    quote_message_id: "",
+  };
+  const route = "chat/send-message/" + valueToString(config.number);
+  console.log("sending data to", route);
   try {
-    const res = await api.post(
-      "chat/send-message/".config.number,
-      {
-        message,
-        quote_message_id: "",
-      },
-      {
-        "x-instance-id": instance.code,
-        "x-instance-secret": instance.secret,
-      }
-    );
+    const res = await api.post(route, data, { headers });
     if (typeof res.data === "object" && res.data !== null) {
       return res.data;
     }
   } catch (error) {
-    //
+    if (isAxiosError(error)) {
+      console.log(
+        error.response.statusText + "(" + error.response.status + ")",
+        error.response.data
+      );
+    } else {
+      console.log("Internal error", error);
+    }
   }
   return "message.text.send.error.api.internal";
 };
 
-export const sendButtons = async (instance, config) => {
+const sendButtons = async (instance, config) => {
   const title = valueToString(config.title);
   const footer = valueToString(config.footer);
   const message = valueToString(config.message);
   const buttons = [];
-
   if (Array.isArray(config.buttons)) {
     for (const index in config.buttons) {
       const i = parseInt(index);
@@ -120,30 +126,28 @@ export const sendButtons = async (instance, config) => {
       }
     }
   }
-
   if (buttons.length < 1) {
     return "message.buttons.send.error.buttons.invalid";
   }
-
+  const headers = {
+    "x-instance-id": instance.code,
+    "x-instance-secret": instance.secret,
+  };
+  const data = {
+    title,
+    footer,
+    message,
+    buttons,
+  };
+  const route = "chat/send-buttons/" + valueToString(config.number);
   try {
-    const res = await api.post(
-      "chat/send-buttons/".config.number,
-      {
-        title,
-        footer,
-        message,
-        buttons,
-      },
-      {
-        "x-instance-id": instance.code,
-        "x-instance-secret": instance.secret,
-      }
-    );
+    const res = await api.post(route, data, { headers });
     if (typeof res.data === "object" && res.data !== null) {
       return res.data;
     }
   } catch (error) {
     //
+    console.log(error);
   }
   return "message.text.send.error.api.internal";
 };
@@ -169,4 +173,4 @@ const parsePhone = (value) => {
   }
   return typeof value === "string" ? value.trim().replace(/\D/g, "") : "";
 };
-module.exports = { send };
+module.exports = { send, sendText, sendButtons };

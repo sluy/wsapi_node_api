@@ -33,7 +33,9 @@ const allAction = async (req, res) => {
     if (
       data.type === "qr" &&
       typeof data.data.qrcode === "string" &&
-      data.data.qrcode !== ""
+      data.data.qrcode !== "" &&
+      typeof data.data.base64 === "string" &&
+      data.data.base64 !== ""
     ) {
       await db("wsapi_instances").where("id", data.instance.id).update({
         qr: data.data.qrcode,

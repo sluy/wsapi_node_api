@@ -1,7 +1,9 @@
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { socket } from '../utils/io';
+import { api } from '../utils/api';
+
 import config from '../utils/config';
 
 const props = defineProps({
@@ -9,7 +11,7 @@ const props = defineProps({
   open: Boolean,
 })
 
-const emit = defineEmits(['update:open', 'update:instance']);
+const emit = defineEmits(['update:open', 'update:instance', 'loaded']);
 const step = ref('scan');
 
 const model = computed({
@@ -23,28 +25,46 @@ const isOpen = computed({
   }
 })
 
-const isCurrentInstance = (payload) => {
-  return typeof payload === 'object' &&
-    payload !== null &&
-    payload.instance_id === model.value.code && isOpen.value === true;
-}
-const mustUpdateQR = (payload) => {
-  return isCurrentInstance(payload) &&
-    typeof payload.data === 'object' &&
-    payload.data !== null &&
-    typeof payload.data.base64 === 'string' &&
-    payload.data.base64 !== '' &&
-    typeof payload.data.qr === 'string' &&
-    payload.data.qr !== '' &&
-    payload.data.qr_src !== model.value.qr_src;
+watch(isOpen, (value) => {
+  if (value) {
+    loadQR();
+  }
+});
+
+const QR = ref(null);
+
+const done = () => {
+  console.log('emitiendo loaded');
+  emit('loaded', props.instance);
 }
 
-socket.on(config.client_id + '.wsapi.webhook.qr', (payload) => {
-  if (mustUpdateQR(payload)) {
-    model.value.qr = payload.data.qr;
-    model.value.qr_src = payload.data.base64;
-    console.log('qr changed');
+const loadQR = async () => {
+  if (!isOpen.value) {
     return;
+  }
+  try {
+    const res = await api.get('instances', { 'value': model.value.id, 'field': 'id' });
+    if (typeof res === 'object' && res !== null && typeof res.data === 'object' && res.data !== null && typeof res.data.qr_src === 'string') {
+      console.log('qr loaded');
+      QR.value = res.data.qr_src;
+      return;
+    }
+  } catch (error) {
+    //Err
+  }
+  QR.value = null;
+}
+
+const isCurrentInstance = (payload) => {
+  return isOpen.value === true &&
+    typeof payload === 'object' && payload !== null &&
+    payload.instance_id === model.value.code;
+}
+
+
+socket.on(config.client_id + '.wsapi.webhook.qr', (payload) => {
+  if (isCurrentInstance(payload)) {
+    loadQR();
   }
 });
 
@@ -59,9 +79,9 @@ socket.on(config.client_id + '.wsapi.webhook.authenticated', (payload) => {
     step.value = 'authenticated';
   }
 });
-socket.on(config.client_id + '.wsapi.webhook.loading.screen', (payload) => {
+socket.on(config.client_id + '1.wsapi.webhook.loading_screen', (payload) => {
   if (isCurrentInstance(payload)) {
-    step.value = 'loading.screen';
+    step.value = 'loading_screen';
   }
 });
 
@@ -84,26 +104,35 @@ socket.on(config.client_id + '.wsapi.webhook.loading.screen', (payload) => {
           </div>
           <div class="mt-10 mb-4 text-center" style="width: 500px;max-width:100%;">
             <div v-if="step === 'scan'">
-              <p>Abra la aplicación <b>WhatsApp</b> desde su dispositivo móvil<br>
-              <b>Whatsapp -> Dispositivos Vinculados -> Vincular Dispositivo</b><br>
-              Posteriormente escanee el código QR mostrado a continuación:
-              </p>
-              <div v-if="typeof model.qr_src === 'string' && model.qr_src !== ''">
-                <img v-bind:src="model.qr_src"
+              <div v-if="typeof QR === 'string' && QR !== ''">
+                <p>Abra la aplicación <b>WhatsApp</b> desde su dispositivo móvil<br>
+                  <b>Whatsapp -> Dispositivos Vinculados -> Vincular Dispositivo</b><br>
+                  Posteriormente escanee el código QR mostrado a continuación:
+                </p>
+                <img v-bind:src="QR"
                   class="inline mt-10"
-                  style="height: 300px; width:300px;display:inline-block;"/>
+                  style="height: 300px; width:300px;"/>
+              </div>
+              <div v-else>
+                <img class="inline mt-10" src="../assets/spinner.gif" />
               </div>
             </div>
-            <div v-else-if="step === 'autenticated'">
-              Ya estamos casi listos, por favor espere...
+            <div v-else-if="step === 'authenticated'">
+              <p>
+                Autenticado ...
+              </p>
+              <img class="inline mt-10" src="../assets/spinner.gif" />
             </div>
-            <div v-else-if="step === 'loading.screen'">
-              Cargando la información de los chats...
+            <div v-else-if="step === 'loading_screen'">
+              <p>
+                Cargando información de chats...
+              </p>
+              <img class="inline mt-10" src="../assets/spinner.gif" />
             </div>
             <div v-else-if="step === 'ready'">
               ¡Instancia cargada exitosamente!
               <div class="text-center">
-                <button @click="isOpen = false" class="px-6 py-2 mt-6 text-blue-800 border border-blue-600 rounded">
+                <button @click="done()" class="px-6 py-2 mt-6 text-blue-800 border border-blue-600 rounded">
                   Cerrar
                 </button>
               </div>

@@ -16,8 +16,9 @@ const editor = ref({
 });
 
 const loadAll = async () => {
+  console.log('Cargando instancias...');
   try {
-    const res = await api.options('instances')
+    const res = await api.head('instances')
     if (res.status === true && Array.isArray(res.data)) {
       instances.value = res.data;
     }
@@ -70,7 +71,7 @@ const updateInstance = (instance) => {
       <div v-else-if="loaded">
         <div v-if="instances.length === 0" class="text-center py-5">
           <p class="pb-5">
-            Aún no ha creado una instancia de WhatsApp.
+            No tienes instancias de <b>WhatsApp</b> registradas.
           </p>
           <button
           class="bg-blue-500 text-white active:bg-blue-600 font-bold uppercase text-xs px-4 py-2 rounded shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button"
@@ -81,7 +82,7 @@ const updateInstance = (instance) => {
         </div>
         <div v-else class="grid xs:grid-cols-1 xs:gap-1 sm:grid-cols-1 sm:gap-1 md:grid-cols-2 md:gap-2 lg:grid-cols-3 lg:gap-3 xl:grid-cols-4 xl:gap-4 xl2:grid-cols-5 md:gap-5">
           <div v-for="(instance, index) of instances" v-bind:key="'instance-card-' + index">
-            <InstanceCard v-model:instance="instances[index]" @dropped="loadAll()"/>
+            <InstanceCard v-model:instance="instances[index]" v-on:change="loadAll"/>
           </div>
         </div>
       </div>

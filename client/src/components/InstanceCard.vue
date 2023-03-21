@@ -7,7 +7,7 @@ import InstanceDropDialog from './InstanceDropDialog.vue';
 const props = defineProps({
   instance: Object,
 })
-const emit = defineEmits(['update:instance', 'dropped']);
+const emit = defineEmits(['update:instance', 'dropped', 'qr-load', 'change']);
 const qrModal = ref(false);
 const dropModal = ref(false);
 
@@ -19,7 +19,15 @@ const model = computed({
 const onDrop = (res) => {
   dropModal.value = false;
   qrModal.value = false;
+  emit('change', res);
   emit('dropped', res);
+}
+
+const onQrLoad = (res) => {
+  console.log('qr cargado, emitiendo change');
+  qrModal.value = false;
+  emit('qr-load', res);
+  emit('change', res);
 }
 
 </script>
@@ -55,6 +63,6 @@ const onDrop = (res) => {
       -->
     </div>
   </div>
-  <InstanceQrModal v-model:open="qrModal" v-model:instance="model" />
-  <InstanceDropDialog v-model="model" v-model:open="dropModal" @dropped="onDrop()"/>
+  <InstanceQrModal v-model:open="qrModal" v-model:instance="model" v-on:loaded="onQrLoad"/>
+  <InstanceDropDialog v-model="model" v-model:open="dropModal" @dropped="onDrop" />
 </template>

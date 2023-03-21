@@ -1,4 +1,4 @@
-const { db } = require("../../bootstrap/db.js");
+const { db } = require("../bootstrap/db.js");
 
 const get = async (key, clientId) => {
   if (key === "" || key === null || key === undefined) {
@@ -17,19 +17,18 @@ const get = async (key, clientId) => {
     .where("client_id", clientId)
     .where("key", key)
     .first();
-
   if (!model) {
-    model = { key, value: null };
-  }
-  if (key === "default.instance" || key.startsWith("default.instance")) {
-    await resolveDefaultInstance(model, clientId);
-  }
-  if (!model.value) {
     return "config.get.not_found";
+  }
+  let value = undefined;
+  try {
+    value = JSON.parse(model.value);
+  } catch (error) {
+    value = model.value;
   }
   return {
     key,
-    value: model.value,
+    value,
   };
 };
 
@@ -53,12 +52,6 @@ const set = async (key, value, clientId) => {
   } else {
     model.value = strVal;
   }
-  if (key.startsWith("default.instance")) {
-    const tmp = await makeDefaultInstance(model, clientId);
-    if (typeof tmp === "string") {
-      return tmp;
-    }
-  }
   model.id
     ? await db("wsapi_config")
         .where("id", model.id)
@@ -71,43 +64,6 @@ const set = async (key, value, clientId) => {
     key: model.key,
     value: model.value,
   };
-};
-
-const resolveDefaultInstance = async (model, clientId) => {
-  if (model.value) {
-    model.value = parseInt(model);
-    return;
-  }
-  if (model.key !== "default.instance") {
-    const base = await db("wsapi_config")
-      .where("key", "default.instance")
-      .where("client_id", clientId)
-      .first();
-    if (base) {
-      model.value = parseInt(base.value);
-      return;
-    }
-  }
-  const niInstance = await db("wsapi_instances").where("client_id", 1).first();
-  if (niInstance) {
-    model.value = niInstance.id;
-    return;
-  }
-  model.value = 0;
-};
-
-const makeDefaultInstance = async (model, clientId) => {
-  model.value = parseInt(value);
-  if (isNaN(model.value) || model.value < 1) {
-    return "config.default.instance.value.invalid";
-  }
-  const instance = await db("wsapi_instances")
-    .where("id", value)
-    .where("client_id", req.client.id)
-    .first();
-  if (!instance) {
-    return "config.default.instance.value.invalid";
-  }
 };
 
 module.exports = { get, set };
