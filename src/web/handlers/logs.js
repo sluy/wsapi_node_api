@@ -1,6 +1,6 @@
-import { read, write } from "../../utils/log.js";
+const { read, write } = require("../../utils/log.js");
 
-export const getAction = (req, res) => {
+const getAction = (req, res) => {
   let name =
     typeof req.input("name") === "string" ? req.input("name").trim() : "";
   if (name === "") {
@@ -16,7 +16,7 @@ export const getAction = (req, res) => {
   });
 };
 
-export const postAction = (req, res) => {
+const postAction = (req, res) => {
   let name =
     typeof req.input("name") === "string" ? req.input("name").trim() : "";
   let action =
@@ -42,3 +42,5 @@ export const postAction = (req, res) => {
     data: read(name).split("\n"),
   });
 };
+
+module.exports = { getAction, postAction };

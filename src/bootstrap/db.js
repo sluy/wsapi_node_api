@@ -1,6 +1,6 @@
-import knex from "knex";
-import config from "../config.js";
-export const db = knex({
+const knex = require("knex");
+const config = require("../config.js");
+const db = knex({
   client: "mysql",
   connection: {
     host: config.db.host,
@@ -10,3 +10,5 @@ export const db = knex({
     database: config.db.name,
   },
 });
+
+module.exports = { db };

@@ -1,12 +1,12 @@
-import express, { json } from "express";
-export const app = express();
-import { createServer } from "http";
-export const server = createServer(app);
-import { Server } from "socket.io";
-import cors from "cors";
+const express = require("express");
+const { createServer } = require("http");
+const { Server } = require("socket.io");
+const app = express();
+const server = createServer(app);
+const cors = require("cors");
 
-export const io = new Server(server, { cors: { origin: "*" } });
-app.use(json());
+const io = new Server(server, { cors: { origin: "*" } });
+app.use(express.json());
 app.use(
   cors({
     methods: "*",
@@ -20,3 +20,5 @@ io.on("connection", (socket) => {
     console.log("user disconnected");
   });
 });
+
+module.exports = { app, server, io };

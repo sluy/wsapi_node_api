@@ -1,11 +1,11 @@
-import { api } from "../bootstrap/api.js";
-import { db } from "../bootstrap/db.js";
-import { v4 as uuidv4 } from "uuid";
-import md5 from "md5";
-import { DateTime } from "luxon";
-import { isAxiosError } from "axios";
+const { api } = require("../bootstrap/api.js");
+const { db } = require("../bootstrap/db.js");
+const { v4 } = require("uuid");
+const md5 = require("md5");
+const { DateTime } = require("luxon");
+const { isAxiosError } = require("axios");
 
-export async function update(search, name, info, clientId) {
+async function update(search, name, info, clientId) {
   const i = await find(search, null, clientId);
   if (!i) {
     return "instance.update.error.not_found";
@@ -36,7 +36,7 @@ export async function update(search, name, info, clientId) {
   return await injectApiInfo(instance);
 }
 
-export async function all(clientId) {
+async function all(clientId) {
   const instances = await db("wsapi_instances")
     .where("client_id", clientId)
     .orderBy("name", "asc");
@@ -46,7 +46,7 @@ export async function all(clientId) {
   return instances;
 }
 
-export async function create(name, info, clientId) {
+async function create(name, info, clientId) {
   if (typeof name === "number") {
     name = name.trim();
   }
@@ -65,7 +65,7 @@ export async function create(name, info, clientId) {
   if (exists) {
     return "instance.save.error.name.exists";
   }
-  const code = md5(uuidv4());
+  const code = md5(v4());
   const now = DateTime.now().toISODate();
   try {
     const res = await api.post("auth/register", {
@@ -100,7 +100,7 @@ export async function create(name, info, clientId) {
   }
 }
 
-export async function drop(value, field, clientId) {
+async function drop(value, field, clientId) {
   const i = await find(value, field, clientId);
   if (!i) {
     return "instance.drop.error.not_found";
@@ -126,7 +126,7 @@ export async function drop(value, field, clientId) {
   return i;
 }
 
-export async function find(value, field, clientId) {
+async function find(value, field, clientId) {
   if (typeof value === "object" && value !== null) {
     field = value.field;
     value = value.value;
@@ -226,3 +226,4 @@ async function injectStatus(instance) {
   }
   return instance;
 }
+module.exports = { all, get, create, update, drop };

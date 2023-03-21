@@ -1,13 +1,13 @@
-import log from "../../utils/log.js";
-import { io } from "../../bootstrap/server.js";
-import { db } from "../../bootstrap/db.js";
+const { io } = require("../../bootstrap/server.js");
+const { db } = require("../../bootstrap/db.js");
+const { write: log } = require("../../utils/log.js");
 
 const makeRes = (data, res) => {
   res.json(data);
   return;
 };
 
-export const allAction = async (req, res) => {
+const allAction = async (req, res) => {
   const data =
     typeof req.body === "object" && req.body !== null ? req.body : {};
   data.instance_id =
@@ -47,3 +47,5 @@ export const allAction = async (req, res) => {
   log("webhook", "finish", data);
   return makeRes(data, res);
 };
+
+module.exports = { allAction };

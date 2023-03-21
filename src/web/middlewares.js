@@ -1,5 +1,5 @@
-import { middlewares } from "../router.js";
-import { db } from "../bootstrap/db.js";
+const { middlewares } = require("../router.js");
+const { db } = require("../bootstrap/db.js");
 
 middlewares.before.unnamed.push(async (req, res, call) => {
   if (call.route === "webhook" && call.method === "all") {

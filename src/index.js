@@ -1,8 +1,8 @@
-import "./router.js";
-import "./web/middlewares.js";
-import { server } from "./bootstrap/server.js";
-import log from "./utils/log.js";
-import config from "./config.js";
+require("./router.js");
+require("./web/middlewares.js");
+const { server } = require("./bootstrap/server.js");
+const { write: log } = require("./utils/log.js");
+const config = require("./config.js");
 log("src-index", "start");
 if (config.dev.status) {
   server.listen(config.dev.port, () => {

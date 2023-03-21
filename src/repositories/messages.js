@@ -1,7 +1,7 @@
-import { api } from "../bootstrap/api.js";
-import { get as getCfg } from "./config.js";
+const { api } = require("../bootstrap/api.js");
+const { get } = require("./config.js");
 
-export const send = async (clientId, config) => {
+const send = async (clientId, config) => {
   if (typeof config !== "object" || config === null) {
     return "messages.send.error.config.invalid";
   }
@@ -31,9 +31,9 @@ export const send = async (clientId, config) => {
     typeof config.instance === "string" ? config.instance.trim() : "";
 
   if (config.instance !== "") {
-    config.instance = await getCfg("default.instance." + config.instance);
+    config.instance = await get("default.instance." + config.instance);
   } else {
-    config.instance = await getCfg("default.instance");
+    config.instance = await get("default.instance");
   }
   let instanceId = config.instance;
   instanceId = parseInt(typeof instanceId === "string" ? instanceId.trim() : 0);
@@ -169,3 +169,4 @@ const parsePhone = (value) => {
   }
   return typeof value === "string" ? value.trim().replace(/\D/g, "") : "";
 };
+module.exports = { send };

@@ -1,5 +1,5 @@
-import { send } from "../../repositories/messages.js";
-export const postAction = async (req, res) => {
+const { send } = require("../../repositories/messages.js");
+const postAction = async (req, res) => {
   const type = req.input("type");
   const config = req.input("config");
 
@@ -16,3 +16,4 @@ export const postAction = async (req, res) => {
     data,
   });
 };
+module.exports = { postAction };

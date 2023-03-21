@@ -1,6 +1,6 @@
-import { db } from "../../bootstrap/db.js";
+const { db } = require("../../bootstrap/db.js");
 
-export const get = async (key, clientId) => {
+const get = async (key, clientId) => {
   if (key === "" || key === null || key === undefined) {
     return "config.get.key.required";
   }
@@ -33,7 +33,7 @@ export const get = async (key, clientId) => {
   };
 };
 
-export const set = async (key, value, clientId) => {
+const set = async (key, value, clientId) => {
   if (typeof key !== "string" || key.trim() === "") {
     return "config.set.key.invalid";
   }
@@ -73,7 +73,7 @@ export const set = async (key, value, clientId) => {
   };
 };
 
-export const resolveDefaultInstance = async (model, clientId) => {
+const resolveDefaultInstance = async (model, clientId) => {
   if (model.value) {
     model.value = parseInt(model);
     return;
@@ -96,7 +96,7 @@ export const resolveDefaultInstance = async (model, clientId) => {
   model.value = 0;
 };
 
-export const makeDefaultInstance = async (model, clientId) => {
+const makeDefaultInstance = async (model, clientId) => {
   model.value = parseInt(value);
   if (isNaN(model.value) || model.value < 1) {
     return "config.default.instance.value.invalid";
@@ -109,3 +109,5 @@ export const makeDefaultInstance = async (model, clientId) => {
     return "config.default.instance.value.invalid";
   }
 };
+
+module.exports = { get, set };

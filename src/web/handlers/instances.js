@@ -1,19 +1,19 @@
-import {
+const {
   find,
   create,
   update,
   drop,
   all,
-} from "../../repositories/instances.js";
+} = require("../../repositories/instances.js");
 
-export const optionsAction = async (req, res) => {
+const optionsAction = async (req, res) => {
   res.json({
     status: true,
     data: await all(req.client.id),
   });
 };
 
-export const getAction = async (req, res) => {
+const getAction = async (req, res) => {
   const model = await find(
     req.input("value"),
     req.input("field"),
@@ -32,7 +32,7 @@ export const getAction = async (req, res) => {
   });
 };
 
-export const postAction = async (req, res) => {
+const postAction = async (req, res) => {
   const model = await create(
     req.input("name"),
     req.input("info"),
@@ -51,7 +51,7 @@ export const postAction = async (req, res) => {
   }
 };
 
-export const putAction = async (req, res) => {
+const putAction = async (req, res) => {
   const model = await update(
     {
       value: req.input("value"),
@@ -75,7 +75,7 @@ export const putAction = async (req, res) => {
   }
 };
 
-export const deleteAction = async (req, res) => {
+const deleteAction = async (req, res) => {
   const model = await drop(
     req.input("value"),
     req.input("field"),
@@ -92,4 +92,12 @@ export const deleteAction = async (req, res) => {
       data: model,
     });
   }
+};
+
+module.exports = {
+  optionsAction,
+  getAction,
+  postAction,
+  putAction,
+  deleteAction,
 };

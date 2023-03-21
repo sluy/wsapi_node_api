@@ -1,12 +1,9 @@
-import { app } from "./bootstrap/server.js";
-import _ from "lodash";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const { app } = require("./bootstrap/server.js");
+const _ = require("lodash");
+const fs = require("fs");
+const path = require("path");
 
-export const middlewares = {
+const middlewares = {
   before: {
     named: {},
     unnamed: [],
@@ -169,3 +166,5 @@ app.patch("/", async (req, res) => {
 app.delete("/", async (req, res) => {
   await router(req, res, "webhook");
 });
+
+module.exports = { middlewares };

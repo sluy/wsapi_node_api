@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   dev: {
     status: false,
     port: 8000,
