@@ -35,7 +35,7 @@ const model = computed({
     v-bind:class="(model === true) ? 'flex' : 'hidden'"
     >
     <div class="text-center">
-      <img src="../assets/spinner.gif"/>
+      <img src="/images/spinner.gif"/>
       <h6 v-show="props.msg && props.msg.trim() !== ''" v-html="props.msg"/>
     </div>
   </div>

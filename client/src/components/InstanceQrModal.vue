@@ -114,20 +114,20 @@ socket.on(config.client_id + '1.wsapi.webhook.loading_screen', (payload) => {
                   style="height: 300px; width:300px;"/>
               </div>
               <div v-else>
-                <img class="inline mt-10" src="../assets/spinner.gif" />
+                <img class="inline mt-10" src="/images/spinner.gif" />
               </div>
             </div>
             <div v-else-if="step === 'authenticated'">
               <p>
                 Autenticado ...
               </p>
-              <img class="inline mt-10" src="../assets/spinner.gif" />
+              <img class="inline mt-10" src="/images/spinner.gif" />
             </div>
             <div v-else-if="step === 'loading_screen'">
               <p>
                 Cargando información de chats...
               </p>
-              <img class="inline mt-10" src="../assets/spinner.gif" />
+              <img class="inline mt-10" src="/images/spinner.gif" />
             </div>
             <div v-else-if="step === 'ready'">
               ¡Instancia cargada exitosamente!
