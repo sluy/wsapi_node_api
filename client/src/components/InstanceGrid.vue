@@ -55,16 +55,22 @@ const updateInstance = (instance) => {
 <template>
     <div class="text-right pb-5" v-if="loaded && !error && instances.length > 0">
       <button
-        class="bg-blue-500 text-white active:bg-blue-600 font-bold uppercase text-xs px-4 py-2 rounded shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button"
+        class="bg-gray-200 text-gray-700 active:bg-gray-200 font-bold uppercase text-xs px-4 py-2 shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button"
+        @click="loadAll()"
+        >
+        actualizar lista
+      </button>
+      <button
+        class="bg-blue-500 text-white active:bg-blue-600 font-bold uppercase text-xs px-4 py-2 shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button"
         @click="createInstance()"
         >
         nueva instancia
       </button>
     </div>
-    <div>
+    <div class="">
       <div v-if="error">
         Ocurrió un error al cargar las instancias.<br>
-        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" @click="loadAll">
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4" @click="loadAll">
           Reintentar
         </button>
       </div>
@@ -74,7 +80,7 @@ const updateInstance = (instance) => {
             No tienes instancias de <b>WhatsApp</b> registradas.
           </p>
           <button
-          class="bg-blue-500 text-white active:bg-blue-600 font-bold uppercase text-xs px-4 py-2 rounded shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button"
+          class="bg-blue-500 text-white active:bg-blue-600 font-bold uppercase text-xs px-4 py-2 shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button"
           @click="createInstance()"
           >
           crear instancia

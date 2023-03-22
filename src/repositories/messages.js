@@ -1,12 +1,14 @@
 const { isAxiosError } = require("axios");
 const { api } = require("../bootstrap/api.js");
 const { get } = require("./config.js");
+const mime = require("mime-types");
+const { parseString } = require("../utils/parsers.js");
 
 const send = async (clientId, config) => {
   if (typeof config !== "object" || config === null) {
     return "messages.send.error.config.invalid";
   }
-  if (!["text", "button"].includes(config.type)) {
+  if (!["text", "button", "image", "file", "location"].includes(config.type)) {
     return "messages.send.error.config.type.invalid";
   }
   if (typeof config.number === "number") {
@@ -58,6 +60,12 @@ const send = async (clientId, config) => {
       return await sendText(instance, config);
     case "button":
       return await sendButtons(instance, config);
+    case "image":
+      return await sendImage(instance, config);
+    case "file":
+      return await sendFile(instance, config);
+    case "location":
+      return await sendLocation(instance, config);
   }
 };
 
@@ -88,6 +96,79 @@ const sendText = async (instance, config) => {
     }
   }
   return "message.text.send.error.api.internal";
+};
+
+const sendImage = async (instance, config) => {
+  if (typeof config.image !== "string" || config.image === "") {
+    return "message.image.send.error.image.invalid";
+  }
+  const headers = {
+    "x-instance-id": instance.code,
+    "x-instance-secret": instance.secret,
+  };
+  const data = {
+    image: config.image,
+    caption: typeof config.caption === "string" ? config.caption : "",
+  };
+  const route = "chat/send-image/" + valueToString(config.number);
+  try {
+    const res = await api.post(route, data, { headers });
+    if (typeof res.data === "object" && res.data !== null) {
+      return res.data;
+    }
+  } catch (error) {
+    //
+    console.log(error);
+  }
+  return "message.image.send.error.api.internal";
+};
+
+const sendFile = async (instance, config) => {
+  if (typeof config.file !== "string" || config.file === "") {
+    return "message.location.send.error.file.invalid";
+  }
+  const headers = {
+    "x-instance-id": instance.code,
+    "x-instance-secret": instance.secret,
+  };
+  const data = {
+    file: config.file,
+    mime: mime.lookup(config.file),
+    caption: typeof config.caption === "string" ? config.caption : "",
+  };
+  const route = "chat/send-file/" + valueToString(config.number);
+  try {
+    const res = await api.post(route, data, { headers });
+    if (typeof res.data === "object" && res.data !== null) {
+      return res.data;
+    }
+  } catch (error) {
+    //
+    console.log(error);
+  }
+  return "message.file.send.error.api.internal";
+};
+
+const sendLocation = async (instance, config) => {
+  const headers = {
+    "x-instance-id": instance.code,
+    "x-instance-secret": instance.secret,
+  };
+  const data = {
+    lat: parseString(config.lat),
+    lng: parseString(config.lng),
+  };
+  const route = "chat/send-location/" + valueToString(config.number);
+  try {
+    const res = await api.post(route, data, { headers });
+    if (typeof res.data === "object" && res.data !== null) {
+      return res.data;
+    }
+  } catch (error) {
+    //
+    console.log(error);
+  }
+  return "message.location.send.error.api.internal";
 };
 
 const sendButtons = async (instance, config) => {
@@ -173,4 +254,12 @@ const parsePhone = (value) => {
   }
   return typeof value === "string" ? value.trim().replace(/\D/g, "") : "";
 };
-module.exports = { send, sendText, sendButtons };
+
+module.exports = {
+  send,
+  sendText,
+  sendButtons,
+  sendImage,
+  sendFile,
+  sendLocation,
+};

@@ -32,7 +32,7 @@ const onQrLoad = (res) => {
 
 </script>
 <template>
-  <div class="max-w-sm rounded overflow-hidden shadow-xl">
+  <div class="max-w-sm overflow-hidden shadow-xl bg-white" style="border: 1px solid #e2e2e2;">
     <div class="px-6 py-4">
       <div class="font-bold text-xl mb-2">{{ props.instance.name }}</div>
       <p class="text-gray-400 text-base" v-if="typeof props.instance.info === 'string' && props.instance.info.trim() !== ''">
@@ -44,14 +44,14 @@ const onQrLoad = (res) => {
     </div>
     <div class="px-6 pt-4 pb-2 text-right">
       <button
-        class="bg-green-500 text-white active:bg-green-600 font-bold uppercase text-xs px-4 py-2 rounded shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button"
+        class="bg-green-500 text-white active:bg-green-600 font-bold uppercase text-xs px-4 py-2 shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button"
         @click="$event => qrModal = true"
         v-show="model.connected !== true"
         >
         conectar
       </button>
       <button
-        class="bg-red-500 text-white active:bg-red-600 font-bold uppercase text-xs px-4 py-2 rounded shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button"
+        class="bg-red-500 text-white active:bg-red-600 font-bold uppercase text-xs px-4 py-2 shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button"
         @click="$event => dropModal = true"
         >
         eliminar

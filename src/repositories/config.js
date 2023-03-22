@@ -1,38 +1,60 @@
 const { db } = require("../bootstrap/db.js");
 
 const get = async (key, clientId) => {
+  clientId = parseInt(clientId);
+
+  if (isNaN(clientId) || clientId < 1) {
+    clientId = 1;
+  }
+
   if (key === "" || key === null || key === undefined) {
     return "config.get.key.required";
   }
   if (typeof key !== "string") {
-    return "config.get.key.invalid";
+    return undefined;
   }
 
   key = key.trim();
+
   if (key === "") {
-    return "config.get.key.required";
+    return undefined;
   }
 
-  let model = await db("wsapi_config")
-    .where("client_id", clientId)
-    .where("key", key)
-    .first();
-  if (!model) {
-    return "config.get.not_found";
+  const lookup = [clientId];
+  if (!lookup.includes(1)) {
+    lookup.push(1);
   }
-  let value = undefined;
-  try {
-    value = JSON.parse(model.value);
-  } catch (error) {
-    value = model.value;
+
+  for (const current of lookup) {
+    const model = await db("wsapi_config")
+      .where("client_id", current)
+      .where("key", key)
+      .first();
+
+    if (model && typeof model.value === "string") {
+      model.value = model.value.trim();
+
+      if (model.value !== "") {
+        try {
+          const tmp = JSON.parse(model.value);
+          if (![undefined, "", null].includes(tmp)) {
+            console.log("Devuelvo", key, current, tmp);
+            return tmp;
+          }
+        } catch (error) {
+          //
+        }
+        return model;
+      }
+    }
   }
-  return {
-    key,
-    value,
-  };
+  return "config.get.not_found";
 };
 
 const set = async (key, value, clientId) => {
+  if (!clientId) {
+    clientId = 1;
+  }
   if (typeof key !== "string" || key.trim() === "") {
     return "config.set.key.invalid";
   }
