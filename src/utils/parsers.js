@@ -1,3 +1,5 @@
+const utf8 = require("utf8");
+
 const parseArray = (value) => {
   if (Array.isArray(value)) {
     return value;
@@ -69,7 +71,7 @@ const injectVars = (message, vars, chrs) => {
   }
   for (const key in flatVars) {
     const lookup = `${startChr}${key}${endChr}`;
-    const replace = parseString(flatVars[key]);
+    const replace = utf8.encode(parseString(flatVars[key]));
     str = str.replace(lookup, replace);
   }
   return str;
