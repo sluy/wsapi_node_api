@@ -166,7 +166,7 @@ const postAction = async (req, res) => {
   }
   //Looking for first client instance and first main instance (of client 1).
   if (!instance) {
-    const lookup = [1];
+    const lookup = [];
     if (clientId !== 1) {
       lookup.unshift(clientId);
     }

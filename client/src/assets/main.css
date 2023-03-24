@@ -1,1 +1,13 @@
 @import './base.css';
+#wsapi_app * {
+  font-size: 13px !important;
+}
+
+#wsapi_app *.text-base {
+  font-size: 15px !important;
+}
+
+#wsapi_app *.text-xl {
+  font-size: 20px !important;
+  padding: 10px !important;
+}

@@ -5,7 +5,7 @@ export default {
     url: 'https://wp.neo.fo',
     secret: '',
     proxy: {
-      status: false,
+      status: true,
       url: window.location.protocol + '//' + window.location.hostname + '/?ruta=wsapi',
       method: 'post'
     }
