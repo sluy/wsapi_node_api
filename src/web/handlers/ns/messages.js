@@ -166,10 +166,7 @@ const postAction = async (req, res) => {
   }
   //Looking for first client instance and first main instance (of client 1).
   if (!instance) {
-    const lookup = [];
-    if (clientId !== 1) {
-      lookup.unshift(clientId);
-    }
+    const lookup = [clientId];
     for (const id of lookup) {
       instance = await db("wsapi_instances").where("client_id", id).first();
       if (instance) {
