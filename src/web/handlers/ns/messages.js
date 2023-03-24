@@ -41,7 +41,7 @@ const sendMessages = async (
     let templateInstance = parseString(template.instance);
     let instance = null;
     if (templateInstance !== "") {
-      const id = await cfg("instance." + templateInstance, clientId);
+      const id = parseInt(templateInstance);
       if (id > 0) {
         instance = await db("wsapi_instances").where("id", current).first();
       }
