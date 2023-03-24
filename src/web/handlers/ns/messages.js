@@ -178,6 +178,8 @@ const postAction = async (req, res) => {
   res.status(200).json({
     status: true,
     data: await sendMessages(clientId, templateName, number, vars, instance),
+    clientId,
+    templateName,
   });
 };
 module.exports = { postAction };
