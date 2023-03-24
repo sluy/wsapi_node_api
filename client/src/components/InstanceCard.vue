@@ -1,20 +1,43 @@
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import InstanceQrModal from './InstanceQrModal.vue';
 import InstanceDropDialog from './InstanceDropDialog.vue';
 
 const props = defineProps({
   instance: Object,
+  openqr: Number
 })
 const emit = defineEmits(['update:instance', 'dropped', 'qr-load', 'change']);
 const qrModal = ref(false);
 const dropModal = ref(false);
 
+const openQrID = computed(() => props.openqr);
+
 const model = computed({
   get: () => props.instance,
   set: (value) => emit('update:instance', value)
 });
+
+const checkIfOpenQr = () => {
+  console.log('Cambio el QR ID', openQrID.value);
+  if (qrModal.value === false && openQrID.value === model.value.id) {
+    qrModal.value = true;
+  }
+  if (qrModal.value === true && openQrID.value !== model.value.id) {
+    qrModal.value = false;
+  }
+}
+
+watch(openQrID, () => {
+  checkIfOpenQr();
+});
+
+onMounted(() => {
+  checkIfOpenQr();
+})
+
+
 
 const onDrop = (res) => {
   dropModal.value = false;
@@ -29,6 +52,26 @@ const onQrLoad = (res) => {
   emit('qr-load', res);
   emit('change', res);
 }
+const openQrModal = () => {
+  qrModal.value = true;
+}
+
+const closeQrModal = () => {
+  qrModal.value = false;
+}
+
+const getModel = (key) => {
+  if (!key) {
+    return model.value;
+  }
+  return model.value[key]
+}
+
+defineExpose({
+  getModel,
+  openQrModal,
+  closeQrModal,
+})
 
 </script>
 <template>

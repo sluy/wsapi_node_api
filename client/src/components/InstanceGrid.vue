@@ -7,6 +7,7 @@ import { onMounted, ref } from 'vue';
 //import { cloneDeep } from 'lodash';
 
 let instances = ref([]);
+let instanceCards = ref([]);
 let loaded = ref(false);
 let error = ref(false);
 
@@ -15,8 +16,11 @@ const editor = ref({
   model: {}
 });
 
+const openQR = ref(0);
+
 const loadAll = async () => {
   console.log('Cargando instancias...');
+  openQR.value = 0;
   try {
     const res = await api.head('instances')
     if (res.status === true && Array.isArray(res.data)) {
@@ -26,6 +30,7 @@ const loadAll = async () => {
   } catch (error) {
     error.value = true
   }
+  console.log(instanceCards.value);
 }
 onMounted(() => {
   loadAll();
@@ -38,9 +43,17 @@ const createInstance = () => {
   };
   editor.value.open = true;
 }
-const onSave = () => {
+
+const onSave = (res) => {
   loadAll();
   editor.value.open = false;
+  if (typeof res === 'object' && res !== null && typeof res.data === 'object' && res.data !== null) {
+    setTimeout(() => {
+      openQR.value = res.data.id;
+      console.log('establecemos el qr por abrir');
+      console.log('open qr', openQR.value);
+    });
+  }
 }
 
 /*
@@ -87,8 +100,15 @@ const updateInstance = (instance) => {
         </button>
         </div>
         <div v-else class="grid xs:grid-cols-1 xs:gap-1 sm:grid-cols-1 sm:gap-1 md:grid-cols-2 md:gap-2 lg:grid-cols-3 lg:gap-3 xl:grid-cols-4 xl:gap-4 xl2:grid-cols-5 md:gap-5">
-          <div v-for="(instance, index) of instances" v-bind:key="'instance-card-' + index">
-            <InstanceCard v-model:instance="instances[index]" v-on:change="loadAll"/>
+          <div >
+            <InstanceCard
+              v-model:instance="instances[index]"
+              v-on:change="loadAll"
+              v-for="(instance, index) of instances"
+              v-bind:key="'instance-card-' + index"
+              :ref="el => instanceCards.push(el)"
+              :openqr="openQR"
+              />
           </div>
         </div>
       </div>
