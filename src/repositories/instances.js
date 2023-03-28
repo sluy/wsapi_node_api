@@ -25,28 +25,41 @@ async function all(clientId) {
  * @returns
  */
 async function regenerateInstance(instance) {
+  if (typeof instance !== "object" || instance === null) {
+    return undefined;
+  }
   try {
     await api.delete("auth/terminate", {
       headers: {
         "x-instance-id": instance.code,
       },
     });
+  } catch (error) {
+    if (
+      !isAxiosError(error) ||
+      !error.response ||
+      error.response.status !== 404
+    ) {
+      console.log("Error regenerate.delete", error);
+      return undefined;
+    }
+  }
+  try {
     const res = await api.post("auth/register", {
       instance_id: instance.code,
     });
     instance.secret = res.data.secret;
     instance.qr = "";
-    instance.updated_at = DateTime.now().toSQL();
-    const instance = await db("wsapi_instances")
-      .where("id", instance.id)
-      .update({
-        secret: instance.secret,
-        qr: "",
-        updated_at: instance.updated_at,
-      });
-    return true;
+    instance.updated_at = DateTime.now().toISODate();
+    await db("wsapi_instances").where("id", instance.id).update({
+      secret: instance.secret,
+      qr: "",
+      updated_at: instance.updated_at,
+    });
+    return instance;
   } catch (error) {
-    return false;
+    console.log("error regenerate.save", error);
+    return undefined;
   }
 }
 
@@ -130,13 +143,14 @@ async function update(search, name, info, clientId) {
   const instance = await db("wsapi_instances").where("id", i.id).update({
     name,
     info,
-    updated_at: DateTime.now().toSQL(),
+    updated_at: DateTime.now().toISODate(),
   });
   return await injectApiInfo(instance);
 }
 
-async function drop(value, field, clientId) {
-  const i = await find(value, field, clientId);
+async function drop(value, field, clientId, injectInfo) {
+  const i = await find(value, field, clientId, injectInfo);
+
   if (!i) {
     return "instance.drop.error.not_found";
   }
@@ -153,7 +167,6 @@ async function drop(value, field, clientId) {
       !error.response ||
       error.response.status !== 404
     ) {
-      console.log(error);
       return "instance.drop.error.api.internal";
     }
   }
@@ -161,7 +174,7 @@ async function drop(value, field, clientId) {
   return i;
 }
 
-async function find(value, field, clientId) {
+async function find(value, field, clientId, injectInfo) {
   if (typeof value === "object" && value !== null) {
     field = value.field;
     value = value.value;
@@ -189,8 +202,10 @@ async function find(value, field, clientId) {
     .where(field, value)
     .where("client_id", clientId)
     .first();
-
-  return await injectApiInfo(instance);
+  if (instance && injectInfo !== false) {
+    return await injectApiInfo(instance);
+  }
+  return instance;
 }
 
 async function injectApiInfo(instance) {
@@ -254,6 +269,7 @@ async function injectStatus(instance) {
     const res = await api.get("auth/status", {
       headers: { "x-instance-id": instance.code },
     });
+    console.log("recupere a", res.data);
     if (typeof res.data === "object" && res.data !== null) {
       if (typeof res.data.connected === "boolean") {
         instance.connected = res.data.connected;
@@ -264,21 +280,33 @@ async function injectStatus(instance) {
       action = "drop";
     }
   } catch (error) {
+    if (
+      isAxiosError(error) &&
+      error.response &&
+      error.response.status === 404
+    ) {
+      //action = "drop";
+    } else {
+      console.log("Internal error", error);
+    }
     //
   }
   if (!instance.connected) {
     let diff = Interval.fromDateTimes(
-      DateTime.fromISO(instance.update_at),
+      DateTime.fromJSDate(instance.updated_at),
       DateTime.now()
     ).length("minutes");
+
     if (diff < 0) {
       diff *= -1;
     }
-    if (diff > 5) {
+    if (!isNaN(diff) && diff > 5) {
       if (action === "drop") {
-        await drop(instance.id, "id", instance.client_id);
+        console.log("Eliminar registro viejo");
+        await drop(instance.id, "id", instance.client_id, false);
         return undefined;
       } else {
+        console.log("Regenerar!");
         await regenerateInstance(instance);
       }
     }
