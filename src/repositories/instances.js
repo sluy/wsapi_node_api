@@ -2,17 +2,52 @@ const { api } = require("../bootstrap/api.js");
 const { db } = require("../bootstrap/db.js");
 const { v4 } = require("uuid");
 const md5 = require("md5");
-const { DateTime } = require("luxon");
+const { DateTime, Interval } = require("luxon");
 const { isAxiosError } = require("axios");
 
 async function all(clientId) {
-  const instances = await db("wsapi_instances")
+  const raw = await db("wsapi_instances")
     .where("client_id", clientId)
     .orderBy("name", "asc");
-  for (const i in instances) {
-    instances[i] = await injectApiInfo(instances[i]);
+  const instances = [];
+  for (const instance of raw) {
+    const injected = await injectApiInfo(instance);
+    if (typeof injected === "object" && injected !== null) {
+      instances.push(injected);
+    }
   }
   return instances;
+}
+
+/**
+ * Regenera la instancia de whatsapi para evitar errores con el código QR o que la instancia haya sido borrada.
+ * @param {*} instance
+ * @returns
+ */
+async function regenerateInstance(instance) {
+  try {
+    await api.delete("auth/terminate", {
+      headers: {
+        "x-instance-id": instance.code,
+      },
+    });
+    const res = await api.post("auth/register", {
+      instance_id: instance.code,
+    });
+    instance.secret = res.data.secret;
+    instance.qr = "";
+    instance.updated_at = DateTime.now().toSQL();
+    const instance = await db("wsapi_instances")
+      .where("id", instance.id)
+      .update({
+        secret: instance.secret,
+        qr: "",
+        updated_at: instance.updated_at,
+      });
+    return true;
+  } catch (error) {
+    return false;
+  }
 }
 
 async function create(name, info, clientId) {
@@ -154,12 +189,17 @@ async function find(value, field, clientId) {
     .where(field, value)
     .where("client_id", clientId)
     .first();
+
   return await injectApiInfo(instance);
 }
 
 async function injectApiInfo(instance) {
-  await injectQR(instance);
-  await injectStatus(instance);
+  for (const call of [injectStatus, injectQR]) {
+    const res = await call(instance);
+    if (typeof res !== "object" || res === null) {
+      return undefined;
+    }
+  }
   return instance;
 }
 
@@ -209,6 +249,7 @@ async function injectStatus(instance) {
   }
   instance.connected = false;
   instance.version = null;
+  let action = "regenerate";
   try {
     const res = await api.get("auth/status", {
       headers: { "x-instance-id": instance.code },
@@ -220,9 +261,27 @@ async function injectStatus(instance) {
       if ("version" in res.data) {
         instance.version = res.data.version;
       }
+      action = "drop";
     }
   } catch (error) {
     //
+  }
+  if (!instance.connected) {
+    let diff = Interval.fromDateTimes(
+      DateTime.fromISO(instance.update_at),
+      DateTime.now()
+    ).length("minutes");
+    if (diff < 0) {
+      diff *= -1;
+    }
+    if (diff > 5) {
+      if (action === "drop") {
+        await drop(instance.id, "id", instance.client_id);
+        return undefined;
+      } else {
+        await regenerateInstance(instance);
+      }
+    }
   }
   return instance;
 }

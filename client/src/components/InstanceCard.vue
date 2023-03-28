@@ -3,41 +3,56 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import InstanceQrModal from './InstanceQrModal.vue';
 import InstanceDropDialog from './InstanceDropDialog.vue';
+import repository from '../repositories/instances';
+import { getQueryFromCurrentUrl } from '../utils/url';
+
 
 const props = defineProps({
   instance: Object,
-  openqr: Number
 })
 const emit = defineEmits(['update:instance', 'dropped', 'qr-load', 'change']);
 const qrModal = ref(false);
 const dropModal = ref(false);
 
-const openQrID = computed(() => props.openqr);
 
 const model = computed({
   get: () => props.instance,
   set: (value) => emit('update:instance', value)
 });
 
-const checkIfOpenQr = () => {
-  console.log('Cambio el QR ID', openQrID.value);
-  if (qrModal.value === false && openQrID.value === model.value.id) {
+const isMainInstance = computed(() => repository.mainInstanceData.name.toLowerCase() === model.value.name.toLowerCase());
+
+const autoOpenQrModal = () => {
+  const query = getQueryFromCurrentUrl();
+  // Checamos que en el query string este definido que se abra el modal del qr (open=qr) ,
+  // que nombre igual a la instancia actual (instance=model.name)
+  // y que esta NO haya sido abierta
+  console.log(model.value);
+  const mustOpen =
+    typeof query.open === 'string' &&
+    query.open.toLowerCase() === 'qr' &&
+    typeof model.value === 'object' &&
+    model.value !== null &&
+    typeof model.value.name === 'string' &&
+    model.value.name !== '' &&
+    typeof query.instance === 'string' &&
+    query.instance !== '' &&
+    query.instance.toLowerCase() === model.value.name.toLowerCase() &&
+    !model.value.connected &&
+    !qrModal.value;
+
+  if (mustOpen) {
     qrModal.value = true;
-  }
-  if (qrModal.value === true && openQrID.value !== model.value.id) {
-    qrModal.value = false;
   }
 }
 
-watch(openQrID, () => {
-  checkIfOpenQr();
-});
-
-onMounted(() => {
-  checkIfOpenQr();
+watch(isMainInstance, () => {
+  autoOpenQrModal();
 })
 
-
+onMounted(() => {
+  autoOpenQrModal();
+})
 
 const onDrop = (res) => {
   dropModal.value = false;
@@ -94,6 +109,7 @@ defineExpose({
         conectar
       </button>
       <button
+        v-show="!isMainInstance"
         class="bg-red-500 text-white active:bg-red-600 font-bold uppercase text-xs px-4 py-2 shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button"
         @click="$event => dropModal = true"
         >

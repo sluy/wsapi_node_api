@@ -1,63 +1,87 @@
 import axios from 'axios'
+import { DateTime } from 'luxon'
 import config from './config'
 
 const requestProxy = async (method, route, data) => {
-  console.log('la url', config.api.proxy.url)
-  const headers = {
-    'Content-Type': 'application/json'
-  }
-  const payload = {
-    method,
-    route,
-    data
-  }
-  const res = await axios({
-    method: config.api.proxy.method,
-    url: config.api.proxy.url,
-    data: payload,
-    headers
-  })
+  const now = DateTime.now()
+  let payload = {}
+  let err = null
 
-  if (typeof res.data === 'object' && res.data !== null) {
-    return res.data
+  try {
+    const headers = {
+      'Content-Type': 'application/json'
+    }
+    const payload = {
+      method,
+      route,
+      data
+    }
+    const res = await axios({
+      method: config.api.proxy.method,
+      url: config.api.proxy.url,
+      data: payload,
+      headers
+    })
+
+    if (typeof res.data === 'object' && res.data !== null) {
+      return res.data
+    }
+    return {}
+  } catch (error) {
+    err = error
   }
-  return {}
+  console.log('api request time: ' + now.diffNow().milliseconds * -1 + 'ms')
+  if (err) {
+    throw err
+  }
+  return payload
 }
 
 const requestApi = async (method, route, data) => {
-  let url = config.api.url
-  const headers = {
-    client_id: config.client_id,
-    api_secret: config.api.secret,
-    'Content-Type': 'application/json'
-  }
-  method = method.trim().toLowerCase()
-  if (typeof data !== 'object' || data === null) {
-    data = {}
-  }
-  data['route'] = Array.isArray(route) ? route.join('/') : route
-  let body = {}
-  if (['get', 'delete', 'options', 'head'].includes(method)) {
-    if (method !== 'get') {
-      data._method = method
-      method = 'get'
+  const now = DateTime.now()
+  let payload = {}
+  let err = null
+  try {
+    let url = config.api.url
+    const headers = {
+      client_id: config.client_id,
+      api_secret: config.api.secret,
+      'Content-Type': 'application/json'
     }
-    if (Object.keys(data).length > 0) {
-      url += '/?' + new URLSearchParams(data).toString()
+    method = method.trim().toLowerCase()
+    if (typeof data !== 'object' || data === null) {
+      data = {}
     }
-  } else {
-    body = data
+    data['route'] = Array.isArray(route) ? route.join('/') : route
+    let body = {}
+    if (['get', 'delete', 'options', 'head'].includes(method)) {
+      if (method !== 'get') {
+        data._method = method
+        method = 'get'
+      }
+      if (Object.keys(data).length > 0) {
+        url += '/?' + new URLSearchParams(data).toString()
+      }
+    } else {
+      body = data
+    }
+    const res = await axios({
+      method,
+      url,
+      data: body,
+      headers
+    })
+    if (typeof res.data === 'object' && res.data !== null) {
+      payload = res.data
+    }
+  } catch (error) {
+    err = error
   }
-  const res = await axios({
-    method,
-    url,
-    data: body,
-    headers
-  })
-  if (typeof res.data === 'object' && res.data !== null) {
-    return res.data
+  console.log('api request time: ' + now.diffNow().milliseconds * -1 + 'ms')
+  if (err) {
+    throw err
   }
-  return {}
+  return payload
 }
 
 export const api = {

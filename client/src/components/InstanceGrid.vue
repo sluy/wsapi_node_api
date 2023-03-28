@@ -1,5 +1,5 @@
 <script setup>
-import { api } from '../utils/api';
+import repository from '../repositories/instances';
 import InstanceCard from './InstanceCard.vue';
 import InstanceEditor from './InstanceEditor.vue';
 
@@ -16,21 +16,14 @@ const editor = ref({
   model: {}
 });
 
-const openQR = ref(0);
-
 const loadAll = async () => {
-  console.log('Cargando instancias...');
-  openQR.value = 0;
   try {
-    const res = await api.head('instances')
-    if (res.status === true && Array.isArray(res.data)) {
-      instances.value = res.data;
-    }
+    instances.value = await repository.all();
     loaded.value = true;
   } catch (error) {
+    console.log('Ocurrió error amigo');
     error.value = true
   }
-  console.log(instanceCards.value);
 }
 onMounted(() => {
   loadAll();
@@ -44,24 +37,11 @@ const createInstance = () => {
   editor.value.open = true;
 }
 
-const onSave = (res) => {
+const onSave = () => {
   loadAll();
   editor.value.open = false;
-  if (typeof res === 'object' && res !== null && typeof res.data === 'object' && res.data !== null) {
-    setTimeout(() => {
-      openQR.value = res.data.id;
-      console.log('establecemos el qr por abrir');
-      console.log('open qr', openQR.value);
-    });
-  }
 }
 
-/*
-const updateInstance = (instance) => {
-  editor.value.model = cloneDeep(instance);
-  editor.value.open = true;
-}
-*/
 
 </script>
 
@@ -107,7 +87,6 @@ const updateInstance = (instance) => {
               v-for="(instance, index) of instances"
               v-bind:key="'instance-card-' + index"
               :ref="el => instanceCards.push(el)"
-              :openqr="openQR"
               />
           </div>
         </div>
