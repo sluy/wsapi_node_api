@@ -271,7 +271,7 @@ async function injectStatus(instance) {
   }
   instance.connected = false;
   instance.version = null;
-  let action = "regenerate";
+  let drop = false;
   try {
     const res = await api.get("auth/status", {
       headers: { "x-instance-id": instance.code },
@@ -284,7 +284,7 @@ async function injectStatus(instance) {
       if ("version" in res.data) {
         instance.version = res.data.version;
       }
-      action = "drop";
+      drop = true;
     }
   } catch (error) {
     if (
@@ -292,6 +292,7 @@ async function injectStatus(instance) {
       error.response &&
       error.response.status === 404
     ) {
+      drop = true;
       //action = "drop";
     } else {
       console.log("Internal error", error);
@@ -303,13 +304,15 @@ async function injectStatus(instance) {
     let diff = date.diffNow(instance.updated_at, "minutes");
     console.log("La diferencia de tiempo", diff);
     if (!isNaN(diff) && diff > 5) {
-      if (action === "drop") {
-        console.log("Eliminar registro viejo");
-        await drop(instance.id, "id", instance.client_id, false);
-        return undefined;
-      } else {
-        console.log("Regenerar!");
-        //await regenerateInstance(instance);
+      if (drop === true) {
+        if (instance.name.toLowerCase() === "principal") {
+          console.log("regenerar instancia");
+          await regenerateInstance(instance);
+        } else {
+          console.log("eliminar instancia");
+          await drop(instance.id, "id", instance.client_id, false);
+          return undefined;
+        }
       }
     }
   }
