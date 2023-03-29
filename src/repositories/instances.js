@@ -309,7 +309,7 @@ async function injectStatus(instance) {
         return undefined;
       } else {
         console.log("Regenerar!");
-        await regenerateInstance(instance);
+        //await regenerateInstance(instance);
       }
     }
   }
