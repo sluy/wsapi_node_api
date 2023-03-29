@@ -27,10 +27,6 @@ async function create(payload) {
   }
 }
 
-async function createMain() {
-  return await create(mainInstanceData)
-}
-
 async function drop(value) {
   if (typeof value === 'object' && value !== null) {
     return drop(value.id)
@@ -49,24 +45,8 @@ async function drop(value) {
 
 async function all() {
   try {
-    console.log('inicio la carga de todos')
     const res = await api.head('instances')
-    console.log('cargué', res)
     if (res.status === true && Array.isArray(res.data)) {
-      console.log('la data está ok, comprobamos exista la instancia principal...')
-      let hasMain = false
-      for (const current of res.data) {
-        if (current.name === mainInstanceData.name) {
-          hasMain = true
-          break
-        }
-      }
-      if (!hasMain) {
-        console.log('No hay instancia principal, la creo.')
-        await createMain()
-        return await all()
-      }
-      console.log('hay instancia principal, devolvemos.')
       return res.data
     }
   } catch (error) {
@@ -77,7 +57,6 @@ async function all() {
 export default {
   mainInstanceData,
   create,
-  createMain,
   drop,
   all
 }

@@ -2,19 +2,26 @@ const { api } = require("../bootstrap/api.js");
 const { db } = require("../bootstrap/db.js");
 const { v4 } = require("uuid");
 const md5 = require("md5");
-const { DateTime, Interval } = require("luxon");
 const { isAxiosError } = require("axios");
+const date = require("../utils/datetime.js");
 
 async function all(clientId) {
   const raw = await db("wsapi_instances")
     .where("client_id", clientId)
     .orderBy("name", "asc");
   const instances = [];
+  let hasMain = false;
   for (const instance of raw) {
     const injected = await injectApiInfo(instance);
     if (typeof injected === "object" && injected !== null) {
       instances.push(injected);
+      if (injected.name.toLowerCase() === "principal") {
+        hasMain = true;
+      }
     }
+  }
+  if (!hasMain) {
+    instances.push(await create("Principal", "", clientId));
   }
   return instances;
 }
@@ -50,7 +57,7 @@ async function regenerateInstance(instance) {
     });
     instance.secret = res.data.secret;
     instance.qr = "";
-    instance.updated_at = DateTime.now().toISODate();
+    instance.updated_at = date.isoNow();
     await db("wsapi_instances").where("id", instance.id).update({
       secret: instance.secret,
       qr: "",
@@ -83,7 +90,7 @@ async function create(name, info, clientId) {
     return "instance.save.error.name.exists";
   }
   const code = md5(v4());
-  const now = DateTime.now().toISODate();
+  const now = date.isoNow();
   try {
     const res = await api.post("auth/register", {
       instance_id: code,
@@ -143,7 +150,7 @@ async function update(search, name, info, clientId) {
   const instance = await db("wsapi_instances").where("id", i.id).update({
     name,
     info,
-    updated_at: DateTime.now().toISODate(),
+    updated_at: date.isoNow(),
   });
   return await injectApiInfo(instance);
 }
@@ -292,14 +299,9 @@ async function injectStatus(instance) {
     //
   }
   if (!instance.connected) {
-    let diff = Interval.fromDateTimes(
-      DateTime.fromJSDate(instance.updated_at),
-      DateTime.now()
-    ).length("minutes");
-
-    if (diff < 0) {
-      diff *= -1;
-    }
+    console.log(typeof instance.updated_at);
+    let diff = date.diffNow(instance.updated_at, "minutes");
+    console.log("La diferencia de tiempo", diff);
     if (!isNaN(diff) && diff > 5) {
       if (action === "drop") {
         console.log("Eliminar registro viejo");
