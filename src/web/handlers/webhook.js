@@ -42,6 +42,11 @@ const allAction = async (req, res) => {
       });
       data.instance.qr = data.data.qrcode;
     }
+    if (data.type === "ready") {
+      await db("wsapi_instances").where("id", data.instance.id).update({
+        connected: 1,
+      });
+    }
   }
   const eventName = client.id + ".wsapi.webhook." + data.type;
   io.emit(eventName, data);
