@@ -326,7 +326,7 @@ async function injectStatus(instance) {
     return undefined;
   }
   //Si es true, ya está conectado, guardamos el valor en la bd.
-  if (connected === true) {
+  if (instance.connected === true) {
     await db("wsapi_instances").where("id", instance.id).update({
       connected: 1,
       updated_at: date.isoNow(),
