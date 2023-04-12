@@ -28,7 +28,7 @@ watch(model, () => {
 
 const drop = async () => {
   try {
-    const res = await api.delete('instances', {
+    const res = await api.patch('instances', {
       value: model.value.id,
       field: 'id'
     });
@@ -44,12 +44,12 @@ const drop = async () => {
 }
 </script>
 <template>
-  <ModalWindow v-model="isOpen" title="Eliminar instancia">
+  <ModalWindow v-model="isOpen" title="Reiniciar Instancia">
     <template v-slot:actions>
       <button
         class="bg-red-500 text-white active:bg-red-500 font-bold uppercase text-xs px-4 py-2  hover:bg-red-600 outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
         type="button" @click="drop()">
-        Eliminar
+        Reiniciar
       </button>
     </template>
     <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-5" role="alert"
@@ -65,7 +65,7 @@ const drop = async () => {
       </span>
     </div>
     <div class="mb-4">
-      ¿Estás seguro que deseas eliminar la instancia <b>{{  model.name }}</b>?.<br> Esta acción es irreversible.
+      ¿Estás seguro que deseas reiniciar la instancia <b>{{  model.name }}</b>?.<br> Después de aceptar se eliminara la vinculación del dispositivo.
     </div>
   </ModalWindow>
 </template>

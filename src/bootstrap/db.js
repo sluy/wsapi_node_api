@@ -1,5 +1,5 @@
 const knex = require("knex");
-const config = require("../config.js");
+const config = require("../config");
 const db = knex({
   client: "mysql",
   connection: {

@@ -26,7 +26,7 @@ const model = computed({
         <div class="max-w-2xl p-3 mx-4 bg-white rounded-md shadow-xl">
           <slot name="header">
             <div class="flex items-center justify-left">
-              <h3 class="text-2xl">
+              <h3 style="font-size: 20px !important;">
                 <slot name="title">{{ props.title }}</slot>
               </h3>
             </div>

@@ -1,5 +1,49 @@
 const { DateTime, Interval } = require("luxon");
 
+function toISO(val, defaultValue) {
+  const tmp = toDateTime(val, defaultValue);
+  if (tmp) {
+    return toDateTime(val, defaultValue).toISO();
+  }
+  return null;
+}
+
+function toDateTime(val, defaultValue) {
+  const tmp = toJS(val, defaultValue);
+  if (tmp) {
+    return DateTime.fromJSDate(tmp);
+  }
+  return null;
+}
+
+function toJS(val, defaultValue) {
+  if (typeof val === "string") {
+    val = val.trim();
+    if (val === "") {
+      val = null;
+    } else {
+      const tmp = DateTime.fromISO(val);
+      if (tmp.isValid) {
+        val = tmp.toJSDate();
+      } else {
+        val = null;
+      }
+    }
+  } else if (val instanceof DateTime && val.isValid) {
+    val = val.toJSDate();
+  }
+  if (val instanceof Date) {
+    return val;
+  }
+  if (defaultValue !== undefined && defaultValue !== null) {
+    const tmp = toJSDate(defaultValue, null);
+    if (tmp) {
+      return tmp;
+    }
+  }
+  return null;
+}
+
 function now() {
   return DateTime.now();
 }
@@ -41,4 +85,7 @@ module.exports = {
   diffNow,
   diff,
   parseDateTime,
+  toJS,
+  toISO,
+  toDateTime,
 };

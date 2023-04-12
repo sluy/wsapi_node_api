@@ -1,131 +1,184 @@
-const { api } = require("../bootstrap/api.js");
 const { db } = require("../bootstrap/db.js");
 const { v4 } = require("uuid");
 const md5 = require("md5");
-const { isAxiosError } = require("axios");
 const date = require("../utils/datetime.js");
-const { isNumber } = require("lodash");
+const config = require("../config.js");
+const whatsapi = require("./whatsapi/instances.js");
 
-async function all(clientId) {
-  const raw = await db("wsapi_instances")
-    .where("client_id", clientId)
-    .orderBy("name", "asc");
-  const instances = [];
-  let hasMain = false;
-  for (const instance of raw) {
-    const injected = await injectApiInfo(instance);
-    if (typeof injected === "object" && injected !== null) {
-      instances.push(injected);
-      if (injected.name.toLowerCase() === "principal") {
-        hasMain = true;
+const {
+  isInteger,
+  isObject,
+  toInteger,
+  isEmpty,
+  isString,
+} = require("../utils/datatypes.js");
+
+function isValid(raw, checkID) {
+  return isObject(raw, {
+    id: (val) => isInteger(val) && (!checkID || toInteger(val) > 0),
+    name: (val) => isString(val) && !isEmpty(val),
+    code: (val) => isString(val) && !isEmpty(val),
+  });
+}
+async function parse(raw) {
+
+  if (Array.isArray(raw)) {
+    const instances = [];
+    for (const current of raw) {
+      const instance = await parse(current);
+      if (typeof instance === 'object' && instance !== null && !Array.isArray(instance)) {
+        instances.push(instance);
+      }
+    }
+    return instances;
+  }
+
+  if (!isObject(raw)) {
+    raw = {};
+  }
+  raw.id = toInteger(raw.id);
+  if (raw.id < 1) {
+    delete raw.id;
+  }
+  for (const key of ["name", "info", "code", "qr", 'secret']) {
+    raw[key] = typeof raw[key] === "string" ? raw[key].trim() : "";
+  }
+  for (const key of ["created_at", "updated_at", "whatsapi_created_at"]) {
+    raw[key] = date.toJS(raw[key]);
+    if (!raw[key]) {
+      if (key === "created_at") {
+        raw[key] = date.now().toJSDate();
+      } else if (key === "updated_at") {
+        raw[key] = raw.created_at;
       }
     }
   }
-  if (!hasMain) {
-    const tmp = await create("Principal", "", clientId);
-    if (typeof tmp === "object" && tmp !== null) {
-      instances.push(tmp);
-    }
+  if (typeof raw.connected === "number" || typeof raw.connected === "string") {
+    raw.connected = parseInt(raw.connected) === 1 ? true : false;
   }
-  return instances;
+  if (typeof raw.connected !== "boolean") {
+    raw.connected = false;
+  }
+  
+  await dropIfExpired(raw);
+
+
+  return raw;
 }
 
-/**
- * Regenera la instancia de whatsapi para evitar errores con el código QR o que la instancia haya sido borrada.
- * @param {*} instance
- * @returns
- */
-async function regenerateInstance(instance) {
-  if (typeof instance !== "object" || instance === null) {
-    return undefined;
+async function createMainInstance(clientId) {
+  const res = create(
+    config.instances.default.name,
+    config.instances.default.info,
+    clientId
+  );
+  if (res === "instance.create.error.name.exists") {
+    return true;
   }
-  try {
-    await api.delete("auth/terminate", {
-      headers: {
-        "x-instance-id": instance.code,
-      },
-    });
-  } catch (error) {
-    if (
-      !isAxiosError(error) ||
-      !error.response ||
-      error.response.status !== 404
-    ) {
-      console.log("Error regenerate.delete", error);
-      return undefined;
+  return res;
+}
+
+async function dropAllExpired() {
+  const all = await db("wsapi_instances").whereNotNull("secret").whereNot('secret', '').where('connected', 0);
+  for (const current of all) {
+    try {
+      await dropIfExpired(current);  
+    } catch (error) {
+      //none
     }
   }
-  try {
-    const res = await api.post("auth/register", {
-      instance_id: instance.code,
-    });
-    instance.secret = res.data.secret;
-    instance.qr = "";
-    instance.updated_at = date.isoNow();
-    await db("wsapi_instances").where("id", instance.id).update({
-      secret: instance.secret,
-      qr: "",
-      connected: false,
-      updated_at: instance.updated_at,
-    });
+}
+
+async function dropIfExpired(instance) {
+  if (Array.isArray(instance)) {
+    for (const current of instance) {
+      await dropIfExpired(current);
+    }
     return instance;
-  } catch (error) {
-    console.log("error regenerate.save", error);
-    return undefined;
   }
+  const validation = {
+    code: (v) => isString(v) && !isEmpty(v),
+  };
+  if (!isObject(instance, validation)) {
+    return instance;
+  }
+  const connected = parseInt(instance.connected) === 1;
+  const code = instance.code.trim();
+  const secret = instance.secret.trim();
+  const id = toInteger(instance.id);
+  const now = date.now().toJSDate();
+
+  if (secret !== '' && !connected) {
+    let mustDrop = false;
+    if (!instance.whatsapi_created_at) {
+      mustDrop = true;
+    } else {
+      let expiration = date.diffNow(instance.whatsapi_created_at, "minutes");
+      if (expiration > config.instances.expiration) {
+        mustDrop = true;
+      }
+    }
+    if (mustDrop) {
+      const res = await whatsapi.drop(code);
+      if (res === true) {
+        instance.secret = "";
+        instance.qr = "";
+        instance.connected = false;
+        instance.whatsapi_created_at = null;
+        instance.updated_at = now;
+        if (id > 0) {
+          await db("wsapi_instances").where("id", instance.id).update({
+            secret: instance.secret,
+            qr: instance.qr,
+            connected: instance.connected,
+            whatsapi_created_at: instance.whatsapi_created_at,
+            updated_at: instance.updated_at,
+          });
+        }
+      }
+    }     
+  }
+  return instance;
+}
+
+async function all(clientId) {
+  await createMainInstance(clientId);
+  const instances = await db("wsapi_instances")
+    .where("client_id", clientId)
+    .orderBy("name", "asc");
+  return await parse(instances);
 }
 
 async function create(name, info, clientId) {
   if (typeof name === "number") {
-    name = name.trim();
+    name = name.toString().trim();
   }
   if (typeof info === "number") {
-    info = info.trim();
+    info = info.toString().trim();
   }
   name = typeof name !== "string" ? "" : name.trim();
   info = typeof info !== "string" ? "" : info.trim();
   if (name === "") {
-    return "instance.save.error.name.invalid";
+    return "instance.create.error.name.invalid";
   }
-  const exists = await db("wsapi_instances")
-    .where("client_id", clientId)
-    .where("name", name)
-    .first();
-  if (exists) {
-    return "instance.save.error.name.exists";
+
+  const exists = await find(name, "name", clientId);
+  if (typeof exists === "object" && exists !== null) {
+    return "instance.create.error.name.exists";
   }
   const code = md5(v4());
-  const now = date.isoNow();
+  const data = await parse({
+    client_id: clientId,
+    name,
+    info,
+    code,
+  });
+
   try {
-    const res = await api.post("auth/register", {
-      instance_id: code,
-    });
-    if (
-      typeof res.data !== "object" ||
-      res.data === null ||
-      typeof res.data.secret !== "string" ||
-      typeof res.data.secret.trim() === ""
-    ) {
-      return "instance.save.error.api.wrong";
-    }
-    const id = await db("wsapi_instances").insert(
-      {
-        client_id: clientId,
-        code,
-        name,
-        info,
-        secret: res.data.secret,
-        qr: "",
-        connected: false,
-        created_at: now,
-        updated_at: now,
-      },
-      "*"
-    );
+    const id = await db("wsapi_instances").insert(data, "*");
     const instance = await find(id[0], "id", clientId);
-    return await injectApiInfo(instance);
+    return instance;
   } catch (error) {
-    console.log(error);
     return "instance.save.error.api.internal";
   }
 }
@@ -156,38 +209,41 @@ async function update(search, name, info, clientId) {
   const instance = await db("wsapi_instances").where("id", i.id).update({
     name,
     info,
-    updated_at: date.isoNow(),
+    updated_at: date.now.toJSDate(),
   });
-  return await injectApiInfo(instance);
+  return instance;
+}
+
+async function refresh(value, field, clientId) {
+  const instance = await find(value, field, clientId);
+  if (instance) {
+    if (instance.secret) {
+      await whatsapi.drop(instance.secret);
+    }
+    instance.secret = ''
+    instance.whatsapi_created_at = null;
+    instance.connected = 0;
+    instance.qr = '';
+    instance.updated_at = date.now().toJSDate();
+    await db("wsapi_instances").where("id", instance.id).update(instance);
+  }
+  return instance;
 }
 
 async function drop(value, field, clientId, injectInfo) {
   const i = await find(value, field, clientId, injectInfo);
-
   if (!i) {
     return "instance.drop.error.not_found";
   }
-  let failed = false;
-  try {
-    await api.delete("auth/terminate", {
-      headers: {
-        "x-instance-id": i.code,
-      },
-    });
-  } catch (error) {
-    if (
-      !isAxiosError(error) ||
-      !error.response ||
-      error.response.status !== 404
-    ) {
-      return "instance.drop.error.api.internal";
-    }
+  const status = await whatsapi.drop(i.code);
+  if (status !== true) {
+    return status;
   }
   await db("wsapi_instances").where("id", i.id).delete();
   return i;
 }
 
-async function find(value, field, clientId, injectInfo) {
+async function find(value, field, clientId) {
   if (typeof value === "object" && value !== null) {
     field = value.field;
     value = value.value;
@@ -215,140 +271,63 @@ async function find(value, field, clientId, injectInfo) {
     .where(field, value)
     .where("client_id", clientId)
     .first();
-  if (instance && injectInfo !== false) {
-    return await injectApiInfo(instance);
+
+  if (instance) {
+    return await parse(instance);
   }
-  return instance;
+  return undefined;
 }
 
-async function injectApiInfo(instance) {
-  for (const call of [injectStatus, injectQR]) {
-    const res = await call(instance);
-    if (typeof res !== "object" || res === null) {
-      return undefined;
-    }
+async function getQR(value, field, clientId) {
+  const instance = await find(value, field, clientId);
+  if (!instance) {
+    return 'instances.get.qr.error.not_found';
   }
-  return instance;
-}
+  const now = date.now().toJSDate();
 
-async function injectQR(instance) {
-  if (
-    typeof instance !== "object" ||
-    instance === null ||
-    typeof instance.code !== "string" ||
-    instance.code === ""
-  ) {
-    return instance;
-  }
-  instance.qr_src = null;
-  try {
-    const res = await api.get("auth/getqr", {
-      headers: { "x-instance-id": instance.code },
-    });
-    if (typeof res.data === "object" && res.data !== null) {
-      if (
-        typeof res.data.qrcode === "string" &&
-        res.data.qrcode !== "" &&
-        instance.qr !== res.data.qrcode
-      ) {
-        await db("wsapi_instances").where("id", instance.id).update({
-          qr: res.data.qrcode,
-        });
-        instance.qr = res.data.qrcode;
-      }
-      if (typeof res.data.base64 === "string" && res.data.base64 !== "") {
-        instance.qr_src = res.data.base64;
-      }
+  if (instance.secret === "") {
+    const data = await whatsapi.create(instance.code);
+    if (typeof data === "string") {
+      return data;
     }
-  } catch (error) {
-    //
-  }
-  return instance;
-}
-/**
- * Get connected status from whatsapi.
- * @param {*} instance
- * @returns Can return `true` if instance is connected, `false` if instance isnt connected or
- *          does not exists in whatsapi and `null` if encounters an error connecting with whatsapi.
- */
-async function getConnectedFromApi(instance) {
-  try {
-    const res = await api.get("auth/status", {
-      headers: { "x-instance-id": instance.code },
-    });
-    console.log("recupere a", res.data);
-    if (typeof res.data === "object" && res.data !== null) {
-      console.log("from api", res.data.connected);
-      if (typeof res.data.connected === "boolean") {
-        return res.data.connected;
-      }
-    }
-  } catch (error) {
-    if (
-      !isAxiosError(error) ||
-      !error.response ||
-      error.response.status !== 404
-    ) {
-      console.log("Cant connect with whatsappi", error);
-      return null;
-    }
-  }
-  return false;
-}
-
-async function injectStatus(instance) {
-  if (
-    typeof instance !== "object" ||
-    instance === null ||
-    typeof instance.code !== "string" ||
-    instance.code === ""
-  ) {
-    return undefined;
-  }
-  if (
-    typeof instance.connected === "number" ||
-    typeof instance.connected === "string"
-  ) {
-    instance.connected = parseInt(instance.connected);
-    if (
-      !isNaN(instance.connected) &&
-      (instance.connected === 0 || instance.connected === 1)
-    ) {
-      instance.connected = instance.connected === 1;
-    }
-  }
-  //Si no es booleando, debemos resolver de whatsapi.
-  if (typeof instance.connected !== "boolean") {
-    instance.connected = await getConnectedFromApi(instance);
-  }
-  //Si el valor es null, no pudo conectar con whatsapi.
-  if (instance.connected === null) {
-    return undefined;
-  }
-  //Si es true, ya está conectado, guardamos el valor en la bd.
-  if (instance.connected === true) {
+    instance.secret = data.secret;
+    instance.updated_at = now;
+    instance.whatsapi_created_at = now;
     await db("wsapi_instances").where("id", instance.id).update({
-      connected: 1,
-      updated_at: date.isoNow(),
+      secret: instance.secret,
+      whatsapi_created_at: instance.whatsapi_created_at,
+      updated_at: instance.whatsapi_created_at,
     });
-    return instance;
   }
-  //Al llegar aqui, connected = false.
-  //Comprobamos si expiró
-  let expiration = date.diffNow(instance.updated_at, "minutes");
-  //En caso que expirase...
-  if (isNaN(expiration) && diff > 5) {
-    //Si es la instancia "Principal", la regeneramos (para mantener el ID).
-    //De lo contrario, eliminamos la instancia.
-    if (instance.name.toLowerCase() !== "principal") {
-      await drop(instance.id, "id", instance.client_id, false);
-      return undefined;
-    } else {
-      await regenerateInstance(instance);
-    }
+
+  const data = await whatsapi.getQR(instance.code);
+  if (typeof data === "string") {
+    return data;
   }
-  console.log("final", instance);
-  //Devolvemos la instancia.
+  if (instance.qr !== data.qr) {
+    instance.qr = data.qr;
+    instance.updated_at = now;
+    await db("wsapi_instances").where("id", instance.id).update({
+      qr: instance.qr,
+      updated_at: instance.updated_at,
+    });
+  }
+  if (data.src) {
+    instance.qr_src = data.src;
+  }
   return instance;
 }
-module.exports = { all, find, create, update, drop };
+
+module.exports = {
+  all,
+  find,
+  create,
+  update,
+  refresh,
+  drop,
+  getQR,
+  isValid,
+  parse,
+  dropIfExpired,
+  dropAllExpired,
+};

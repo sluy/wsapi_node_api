@@ -1,0 +1,28 @@
+{
+  "url": "http://localhost:3000",
+  "key": "TT856UkE^jvq",
+  "dev": {
+    "status": true,
+    "port": 3000
+  },
+  "db": {
+    "host": "127.0.0.1",
+    "user": "root",
+    "password": "112321Asd*",
+    "name": "neosepelios_ni2"
+  },
+  "api": {
+    "url": "http://198.251.69.248:8080",
+    "secret": "1!8$qz52C4!P"
+  },
+  "logs": {
+    "status": true
+  },
+  "instances": {
+    "expiration": 3,
+    "default": {
+      "name": "principal",
+      "info": ""
+    }
+  }
+}

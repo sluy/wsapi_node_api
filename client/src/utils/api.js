@@ -45,8 +45,8 @@ const requestApi = async (method, route, data) => {
     let url = config.api.url
     const headers = {
       client_id: config.client_id,
-      api_secret: config.api.secret,
-      'Content-Type': 'application/json'
+      api_key: config.api.secret,
+      'Content-Type': 'application/json',
     }
     method = method.trim().toLowerCase()
     if (typeof data !== 'object' || data === null) {
@@ -56,13 +56,15 @@ const requestApi = async (method, route, data) => {
     let body = {}
     if (['get', 'delete', 'options', 'head'].includes(method)) {
       if (method !== 'get') {
-        data._method = method
-        method = 'get'
+        headers._method = method;
+        method = 'get';
       }
       if (Object.keys(data).length > 0) {
         url += '/?' + new URLSearchParams(data).toString()
       }
     } else {
+      headers._method = method;
+      method = 'post';
       body = data
     }
     const res = await axios({

@@ -5,6 +5,7 @@ import InstanceQrModal from './InstanceQrModal.vue';
 import InstanceDropDialog from './InstanceDropDialog.vue';
 import repository from '../repositories/instances';
 import { getQueryFromCurrentUrl } from '../utils/url';
+import { api } from '../utils/api';
 
 
 const props = defineProps({
@@ -82,6 +83,20 @@ const getModel = (key) => {
   return model.value[key]
 }
 
+const refreshAndOpenQR = async () => {
+  try {
+    await api.patch('instances', {
+      value: model.value.id,
+      field: 'id'
+    });
+    qrModal.value = true;
+  } catch (error) {
+    //
+    console.log('un error...!', error);
+  }
+}
+
+
 defineExpose({
   getModel,
   openQrModal,
@@ -104,9 +119,15 @@ defineExpose({
       <button
         class="bg-green-500 text-white active:bg-green-600 font-bold uppercase text-xs px-4 py-2 shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button"
         @click="$event => qrModal = true"
-        v-show="model.connected !== true"
+        v-if="model.connected !== true"
         >
         conectar
+      </button>
+      <button v-else
+        class="bg-green-500 text-white active:bg-green-600 font-bold uppercase text-xs px-4 py-2 shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button"
+        @click="refreshAndOpenQR()"
+        >
+        reconectar
       </button>
       <button
         v-show="!isMainInstance"

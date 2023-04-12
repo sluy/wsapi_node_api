@@ -19,6 +19,7 @@ const editor = ref({
 const loadAll = async () => {
   try {
     instances.value = await repository.all();
+    console.log('RECUPERANDO', instances.value);
     loaded.value = true;
   } catch (error) {
     console.log('Ocurrió error amigo');
@@ -52,12 +53,6 @@ const onSave = () => {
         @click="loadAll()"
         >
         actualizar lista
-      </button>
-      <button
-        class="bg-blue-500 text-white active:bg-blue-600 font-bold uppercase text-xs px-4 py-2 shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button"
-        @click="createInstance()"
-        >
-        nueva instancia
       </button>
     </div>
     <div class="">

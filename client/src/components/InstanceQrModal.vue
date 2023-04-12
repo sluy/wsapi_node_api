@@ -43,9 +43,9 @@ const loadQR = async () => {
     return;
   }
   try {
-    const res = await api.get('instances', { 'value': model.value.id, 'field': 'id' });
+    const res = await api.get('instances/qr', { 'value': model.value.id, 'field': 'id' });
+    console.log('LA RESPUESTA DE QR', res);
     if (typeof res === 'object' && res !== null && typeof res.data === 'object' && res.data !== null && typeof res.data.qr_src === 'string') {
-      console.log('qr loaded');
       QR.value = res.data.qr_src;
       return;
     }
@@ -100,7 +100,7 @@ socket.on(config.client_id + '1.wsapi.webhook.loading_screen', (payload) => {
           ">
         <div class="max-w-2xl p-6 mx-4 bg-white rounded-md shadow-xl">
           <div class="flex items-center justify-center">
-            <h3 class="text-2xl text-center">Conectar Instancia</h3>
+            <h3 class="text-center" style="font-size: 20px !important;">Conectar Instancia</h3>
           </div>
           <div class="mt-10 mb-4 text-center" style="width: 500px;max-width:100%;">
             <div v-if="step === 'scan'">

@@ -45,7 +45,11 @@ async function drop(value) {
 
 async function all() {
   try {
-    const res = await api.head('instances')
+    const res = await api.head('instances');
+
+    console.log('EN ALL', res);
+
+
     if (res.status === true && Array.isArray(res.data)) {
       return res.data
     }

@@ -4,16 +4,40 @@ const {
   update,
   drop,
   all,
+  refresh,
 } = require("../../repositories/instances.js");
 
 const headAction = async (req, res) => {
+  const a = await all(req.client.id);
+  console.log('INSTANCES HEAD!', a);
   res.json({
     status: true,
-    data: await all(req.client.id),
+    data: a,
   });
 };
 
+const patchAction = async (req, res) => {
+  console.log('INSTANCES PATCH');
+  const model = await refresh(
+    req.input("value"),
+    req.input("field"),
+    req.client.id
+  );
+  if (model) {
+    res.json({
+      status: true,
+      data: model,
+    });
+    return;
+  }
+  res.json({
+    status: false,
+    message: "instances.refresh.error.not_found",
+  });
+}
+
 const getAction = async (req, res) => {
+  console.log('INSTANCES GET');
   const model = await find(
     req.input("value"),
     req.input("field"),
@@ -99,5 +123,6 @@ module.exports = {
   getAction,
   postAction,
   putAction,
+  patchAction,
   deleteAction,
 };

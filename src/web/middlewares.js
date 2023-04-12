@@ -31,6 +31,7 @@ middlewares.before.unnamed.push(async (req, res, call) => {
       }
     }
   }
+  console.log(config.dev.status, config.key, api_key);
   //Cheking for api_key header if app is under production.
   const isAllowed =
     config.dev.status !== true ||
