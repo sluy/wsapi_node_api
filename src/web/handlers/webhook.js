@@ -47,6 +47,11 @@ const allAction = async (req, res) => {
         connected: 1,
       });
     }
+    if (data.type === "disconnected") {
+      await db('wsapi_instances').where('id', data.instance.id).update({
+        connected: 0,
+      });
+    }
   }
   const eventName = client.id + ".wsapi.webhook." + data.type;
   io.emit(eventName, data);
