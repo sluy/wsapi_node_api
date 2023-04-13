@@ -59,10 +59,7 @@ async function parse(raw) {
   if (typeof raw.connected !== "boolean") {
     raw.connected = false;
   }
-  
   await dropIfExpired(raw);
-
-
   return raw;
 }
 
@@ -102,7 +99,7 @@ async function dropIfExpired(instance) {
   if (!isObject(instance, validation)) {
     return instance;
   }
-  const connected = parseInt(instance.connected) === 1;
+  const connected = instance.connected === true || parseInt(instance.connected) === 1;
   const code = instance.code.trim();
   const secret = instance.secret.trim();
   const id = toInteger(instance.id);
@@ -119,6 +116,7 @@ async function dropIfExpired(instance) {
       }
     }
     if (mustDrop) {
+      console.log('DEBERIA ELIMINAR?', mustDrop);
       const res = await whatsapi.drop(code);
       if (res === true) {
         instance.secret = "";
@@ -216,9 +214,10 @@ async function update(search, name, info, clientId) {
 
 async function refresh(value, field, clientId) {
   const instance = await find(value, field, clientId);
+  
   if (instance) {
     if (instance.secret) {
-      await whatsapi.drop(instance.secret);
+      await whatsapi.drop(instance.code);
     }
     instance.secret = ''
     instance.whatsapi_created_at = null;

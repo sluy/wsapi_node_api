@@ -36,7 +36,6 @@ async function drop(code) {
     return "whatsapi.instance.drop.error.code.invalid";
   }
   try {
-    //por ahora en pruebas para no volver asco whatsapi.
     await api.delete("auth/terminate", {
       headers: {
         "x-instance-id": code,
