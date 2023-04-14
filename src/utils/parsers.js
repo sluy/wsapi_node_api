@@ -71,7 +71,7 @@ const injectVars = (message, vars, chrs) => {
   }
   for (const key in flatVars) {
     const lookup = `${startChr}${key}${endChr}`;
-    const replace = utf8.encode(parseString(flatVars[key]));
+    const replace = parseString(flatVars[key]);
     str = str.replaceAll(lookup, replace);
   }
   return str;
