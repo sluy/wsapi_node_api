@@ -45,7 +45,7 @@ const requestApi = async (method, route, data) => {
     let url = config.api.url
     const headers = {
       client_id: config.client_id,
-      api_key: config.api.secret,
+      app_key: config.api.secret,
       'Content-Type': 'application/json',
     }
     method = method.trim().toLowerCase()

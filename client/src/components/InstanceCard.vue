@@ -95,24 +95,21 @@ const refreshAndOpenQR = async () => {
     console.log('un error...!', error);
   }
 }
-
-
 defineExpose({
   getModel,
   openQrModal,
   closeQrModal,
 })
-
 </script>
 <template>
   <div class="max-w-sm overflow-hidden shadow-xl bg-white" style="border: 1px solid #e2e2e2;">
     <div class="px-6 py-4">
       <div class="font-bold text-xl mb-2">{{ props.instance.name }}</div>
+      <p class="text-gray-400 text-base">
+        {{  props.instance.code  }}
+      </p>
       <p class="text-gray-400 text-base" v-if="typeof props.instance.info === 'string' && props.instance.info.trim() !== ''">
         {{  props.instance.info  }}
-      </p>
-      <p class="text-gray-400 text-base" v-else>
-        Sin información adicional.
       </p>
     </div>
     <div class="px-6 pt-4 pb-2 text-right">

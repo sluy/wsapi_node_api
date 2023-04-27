@@ -132,6 +132,8 @@ async function dropIfExpired(instance) {
             whatsapi_created_at: instance.whatsapi_created_at,
             updated_at: instance.updated_at,
           });
+
+          await db("wsapi_instances").where("id", instance.id).delete();
         }
       }
     }     
