@@ -133,10 +133,17 @@ async function dropIfExpired(instance) {
             updated_at: instance.updated_at,
           });
 
-          await db("wsapi_instances").where("id", instance.id).delete();
+          
         }
       }
-    }     
+    }
+    if (instance.id && !instance.connected && date.diffNow(instance.whatsapi_created_at, "minutes") > config.instances.expiration) {
+      try {
+        await db("wsapi_instances").where("id", instance.id).delete();
+      } catch (error) {
+        //
+      }
+    } 
   }
   return instance;
 }
