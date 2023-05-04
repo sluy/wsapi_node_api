@@ -170,7 +170,7 @@ Instance.exec = async(instanceId, clientId, call, payload) => {
   const tmp = call.trim().split('.');
   const rec = [i];
   //Preventing infinite loop.
-  while(rec.length > 0) {
+  while(rec.length < 5) {
     const key = tmp.shift().trim();
     const last = rec.length - 1;
     if (key === '' ||!rec[last][key]) { 
