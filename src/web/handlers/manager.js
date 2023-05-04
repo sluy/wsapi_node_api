@@ -1,8 +1,8 @@
-const Instance = require('../../repositories/instance.js');
+const Manager = require('../../repositories/manager.js');
 
 const postAction = async (req, res) => {
   try {
-    const data = await Instance.exec(req.instance_id, req.client.id, req.input('call'), req.input('payload'));
+    const data = await Manager.exec(req.instance_id, req.client.id, req.input('call'), req.input('payload'));
     if (typeof data === 'string') {
       return res.status(500).json({ status: false, message: data});
     }
