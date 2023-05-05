@@ -2,7 +2,7 @@ const { api } = require("../../bootstrap/api.js");
 const {
   parseString,
   injectVars,
-} = require("../../../utils/parsers");
+} = require("../../utils/parsers.js");
 const { validateBasics } = require('./helpers.js');
 
 const get = {
@@ -27,7 +27,7 @@ const get = {
     const route = `chat/all`;
     try {
       const res = await api.get(route, { headers });
-      if (Array.isArray(res.data)) {
+      if (!Array.isArray(res.data)) {
         return `${node}.error.api.internal`;
       }
       return res.data;
@@ -46,7 +46,7 @@ const get = {
    *                         - 'message': Message to send.
    *                         - 'quote_message_id': Quoted message id (optional).
    *                         - 'vars': An object with a vars to inject.
-   * @returns {object|string}
+   * @returns {Promise<object|string>}
    */
   one: async (payload) => {
     let node = 'whatsapi.chat.get.one';
@@ -82,7 +82,7 @@ const message = {
    *                         - 'message': Message to send.
    *                         - 'quote_message_id': Quoted message id (optional).
    *                         - 'vars': An object with a vars to inject.
-   * @returns {object[]|string}
+   * @returns {Promise<object[]|string>}
    */
   all: async (payload)  => {
     let node = 'whatsapi.chat.message.all';
@@ -120,7 +120,7 @@ const message = {
    *                         - 'message': Message to send.
    *                         - 'quote_message_id': Quoted message id (optional).
    *                         - 'vars': An object with a vars to inject.
-   * @returns {object|string}
+   * @returns {Promise<object|string>}
    */
   text: async (payload)  => {
     let node = 'whatsapi.chat.message.text.send';
@@ -142,11 +142,7 @@ const message = {
     const route = `chat/send-message/${payload.number}`;
     try {
       const res = await api.post(route, data, { headers });
-      if (
-        typeof res.data !== "object" ||
-        res.data === null ||
-        typeof res.data.status !== "success"
-      ) {
+      if (typeof res.data !== "object" || res.data === null || res.data.status !== "success") {
         return `${node}.error.api.internal`;
       }
       return res.data;
@@ -164,7 +160,7 @@ const message = {
    *                         - 'image': Image url or base64.
    *                         - 'caption': Image text (optional).
    *                         - 'vars': An object with a vars to inject.
-   * @returns {object|string}
+   * @returns {Promise<object|string>}
    */
   image: async (payload)  => {
     let node = 'whatsapi.chat.message.image.send';
@@ -189,7 +185,7 @@ const message = {
       if (
         typeof res.data !== "object" ||
         res.data === null ||
-        typeof res.data.status !== "success"
+        res.data.status !== "success"
       ) {
         return `${node}.error.api.internal`;
       }
@@ -209,7 +205,7 @@ const message = {
    *                         - 'mime': Mimetype of file (ex. image/png)
    *                         - 'caption': File text (optional).
    *                         - 'vars': An object with a vars to inject.
-   * @returns {object|string}
+   * @returns {Promise<object|string>}
    */
   file: async (payload)  => {
     let node = 'whatsapi.chat.message.file.send';
@@ -238,7 +234,7 @@ const message = {
       if (
         typeof res.data !== "object" ||
         res.data === null ||
-        typeof res.data.status !== "success"
+        res.data.status !== "success"
       ) {
         return `${node}.error.api.internal`;
       }
@@ -254,11 +250,10 @@ const message = {
   *                         - 'code': Instance code.
   *                         - 'secret': Instance secret.
  *                          - 'number': Chat phone number.
-  *                         - 'file': File url or base64.
-  *                         - 'mime': Mimetype of file (ex. image/png)
-  *                         - 'caption': File text (optional).
+  *                         - 'lat': Latitude.
+  *                         - 'lng': Longitude.
   *                         - 'vars': An object with a vars to inject.
-  * @returns {object|string}
+  * @returns {Promise<object|string>}
   */
  location: async (payload)  => {
    let node = 'whatsapi.chat.message.location.send';
@@ -288,7 +283,7 @@ const message = {
      if (
        typeof res.data !== "object" ||
        res.data === null ||
-       typeof res.data.status !== "success"
+       res.data.status !== "success"
      ) {
        return `${node}.error.api.internal`;
      }

@@ -3,7 +3,7 @@ const chats = require('./whatsapi/chats.js');
 const contacts = require('./whatsapi/contacts.js');
 const instances = require('./instances.js');
 
-class Instance {
+class Manager {
   /**
    * @param {{[index:string]:any, code: string, secret: string}} instance
    */
@@ -20,7 +20,7 @@ class Instance {
     this.chats = new Chats(this);
     this.account = new Account(this);
     this.contacts = new Contacts(this);
-    this.message = new Message(this);
+    this.messages = new Messages(this);
     this.vars = {};
   }
   setVars(data) {
@@ -52,24 +52,24 @@ class Instance {
 
 class Chats {
   /**
-   * @param {Instance} parent 
+   * @param {Manager} parent 
    */
   constructor(parent) {
     this.parent = parent;
   }
 
   async all() {
-    return await chats.get.all(this.parent.instance);
+    return await chats.get.all(this.parent.payload());
   }
 
-  async get(payload) {
+  async one(payload) {
     return await chats.get.one(this.parent.payload(payload));
   }
 }
 
-class Message {
+class Messages {
   /**
-   * @param {Instance} parent 
+   * @param {Manager} parent 
    */
   constructor(parent) {
     this.parent = parent;
@@ -92,13 +92,13 @@ class Message {
   }
 
   async location(payload) {
-    return await chats.message.location(payload);
+    return await chats.message.location(this.parent.payload(payload));
   }
 }
 
 class Account {
   /**
-   * @param {Instance} parent 
+   * @param {Manager} parent 
    */
   constructor(parent) {
     this.parent = parent;
@@ -108,18 +108,18 @@ class Account {
     return await account.device(this.parent.payload());
   }
 
-  async setName(value) {
+  async setName(payload) {
     return await account.set.name(this.parent.payload(payload));
   }
 
-  async setStatus(value) {
+  async setStatus(payload) {
     return await account.set.status(this.parent.payload(payload));
   }
 }
 
 class Contacts {
   /**
-   * @param {Instance} parent 
+   * @param {Manager} parent 
    */
   constructor(parent) {
     this.parent = parent;
@@ -133,11 +133,11 @@ class Contacts {
     return await contacts.get.one(this.parent.payload(payload));
   }
 
-  async picture(number) {
+  async picture(payload) {
     return await contacts.get.picture(this.parent.payload(payload));
   }
 
-  async valid(number) {
+  async valid(payload) {
     return await contacts.get.valid(this.parent.payload(payload));
   }
 }
@@ -148,18 +148,19 @@ class Contacts {
  * @param {*} searchValue Value to search.
  * @param {*} searchKey   Key to use.
  * @param {*} clientId    Associated client id.
- * @returns {Promise<string|Instance>}
+ * @returns {Promise<string|Manager>}
  */
-Instance.find = async (searchValue, searchKey, clientId) => {
-  const i = instances.find(searchValue, searchKey, clientId);
+Manager.find = async (searchValue, searchKey, clientId) => {
+  const i = await instances.find(searchValue, searchKey, clientId);
   if (typeof i === 'object' && i !== null) {
-    return new Instance(i);
+    return new Manager(i);
   }
   return i;
 }
 
-Instance.exec = async(instanceId, clientId, call, payload) => {
-  const i = await Instance.find(instanceId, 'id', clientId);
+Manager.exec = async(instanceId, clientId, call, payload) => {
+  console.log(instanceId, clientId, call, payload);
+  const i = await Manager.find(instanceId, 'id', clientId);
   if (typeof i === 'string') {
     return i;
   }
@@ -189,4 +190,4 @@ Instance.exec = async(instanceId, clientId, call, payload) => {
   }
   return err;
 }
-module.exports = Instance;
+module.exports = Manager;

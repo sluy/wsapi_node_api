@@ -1,3 +1,4 @@
+const { isAxiosError } = require("axios");
 const { api } = require("../../bootstrap/api.js");
 const { validateBasics } = require('./helpers.js');
 
@@ -8,7 +9,7 @@ const get = {
    *                         - 'code': Instance code.
    *                         - 'secret': Instance secret.
    *                         - 'vars': An object with a vars to inject.
-   * @returns {object[]|string}
+   * @returns {Promise<object[]|string>}
    */
   all: async (payload) => {
     let node = 'whatsapi.contacts.get.all';
@@ -39,7 +40,7 @@ const get = {
    *                         - 'secret': Instance secret.
    *                         - 'number': Contact phone number.
    *                         - 'vars': An object with a vars to inject.
-   * @returns {object[]|string}
+   * @returns {Promise<object[]|string>}
    */
   one: async (payload) => {
     let node = 'whatsapi.contacts.get.one';
@@ -95,6 +96,9 @@ const get = {
       }
       return `${node}.error.api.internal`;
     } catch (error) {
+      if (isAxiosError(error) && error.response && error.response.status === 422) {
+        return { src: null };
+      }
       console.log(error);
       return `${node}.error.api.internal`;
     }
@@ -106,7 +110,7 @@ const get = {
    *                         - 'secret': Instance secret.
    *                         - 'number': Contact phone number.
    *                         - 'vars': An object with a vars to inject.
-   * @returns {boolean|string} Returns true if is a whatsapp account number, otherwise false. On
+   * @returns {Promise<boolean|string>} Returns true if is a whatsapp account number, otherwise false. On
    *                           any error returns an string.
    */
   valid: async (payload) => {

@@ -2,7 +2,7 @@ const { api } = require("../../bootstrap/api.js");
 const {
   parseString,
   injectVars,
-} = require("../../../utils/parsers");
+} = require("../../utils/parsers.js");
 const { validateBasics } = require('./helpers.js');
 
 /**
@@ -47,7 +47,7 @@ const set = {
    */
   name: async (payload)  => {
     let node = 'whatsapi.account.set.name';
-    const validation = validateBasics(node, payload, 'phone');
+    const validation = validateBasics(node, payload, 'number');
     if (typeof validation === 'string') {
       return validation;
     }
@@ -83,7 +83,7 @@ const set = {
    */
   status: async (payload)  => {
     let node = 'whatsapi.account.set.status';
-    const validation = validateBasics(node, payload, 'phone');
+    const validation = validateBasics(node, payload, 'number');
     if (typeof validation === 'string') {
       return validation;
     }  

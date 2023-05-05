@@ -1,8 +1,7 @@
 const {
   parsePhone,
   parseString,
-  injectVars,
-} = require("../../../utils/parsers");
+} = require("../../utils/parsers");
 
 function validateBasics(node, payload, exclude) {
   if (!Array.isArray(exclude)) {
@@ -11,7 +10,7 @@ function validateBasics(node, payload, exclude) {
   if (typeof payload !== 'object' || payload === null) {
     return `${node}.error.invalid`;
   }
-  for (const key in ['code', 'secret', 'number']) {
+  for (const key of ['code', 'secret', 'number']) {
     payload[key] = parseString(payload[key]).trim();
     if (payload[key] === '' && !exclude.includes(key)) {
       return `${node}.error.${key}.required`;
