@@ -60,28 +60,36 @@ class Chats {
   }
 
   async all() {
-    write('manager.chats.all', 'start');
+    const res = [];
     try {
-      const chats = await chats.get.all(this.parent.payload());
-      write('manager.chats.all', 'raw', [typeof chats, chats]);
-      if (Array.isArray(chats)) {
-        for (const chat of chats) {
-          if (chat.profile_picture === null) {
-            const picture = await this.parent.contacts.picture({ number: chat.id.user });
-            if (typeof picture === 'object' && picture !== null && typeof picture.src === 'string' && picture.src.length !== '') {
-              chat.profile_picture = picture.src;
-            }
-            
+      const raw = await chats.get.all(this.parent.payload());
+      if (Array.isArray(raw)) {
+        for (const current of raw) {
+          if (typeof current === 'object' && current !== null) {
+              if (current.profile_picture === null) {
+                try {
+                    const tmp = await contacts.get.picture(this.parent.payload({ number: current.id.user}));  
+                    if (typeof tmp === 'object' && tmp !== null && typeof tmp.src === 'string' && tmp.src !== '') {
+                        current.profile_picture = tmp.src;
+                    }    
+                } catch (error) {
+                    //Do nothing.
+                }
+              }
+              res.push(current);
+              break;
           }
         }
       } else {
-        write('manager.chats.all', 'wrong.api.response');
+          return {
+              typo: typeof raw,
+              data: raw,
+          }
       }
-      return chats;
     } catch (error) {
-      write('manager.chats.all', 'error', error);
+      return error;
     }
-    return [];
+    return res;
   }
 
   async one(payload) {
