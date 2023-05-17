@@ -4,7 +4,7 @@ const contacts = require('./whatsapi/contacts.js');
 const instances = require('./instances.js');
 const { write } = require('../utils/log.js');
 const { db } = require('../bootstrap/db.js');
-const { default: knex } = require('knex');
+const knex = require('knex');
 
 class Manager {
   /**
@@ -68,10 +68,14 @@ class Chats {
       if (Array.isArray(raw)) {
         for (const current of raw) {
           if (typeof current === 'object' && current !== null) {
-            current.services = await db('servicios')
-              .where('cliente_id', this.parent.instance.client_id)
-              .where(knex.raw(`REGEXP_REPLACE(wsapp_contratante, '[a-zA-Z\+\_ ]+', '') = '${current.id.user}'`));
-
+              
+            const where = `REGEXP_REPLACE(wsapp_contratante, '[a-zA-Z\+\_ ]+', '') = '${current.id.user}'`;
+              
+            
+            current.services = await db('servicios').where('cliente_id', this.parent.instance.client_id).whereRaw(where);
+            
+            
+            
 
 
 
@@ -86,8 +90,8 @@ class Chats {
                   //Do nothing.
               }
             }
-            res.push(current);
               */
+            res.push(current);
           }
         }
       } else {
@@ -96,8 +100,8 @@ class Chats {
               data: raw,
           }
       }
-    } catch (error) {
-      return error;
+    } catch (err) {
+      return { type: 'ERROR', err: JSON.stringify(err), typo: typeof err, msg: err.message };
     }
     return res;
   }
