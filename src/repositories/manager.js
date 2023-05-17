@@ -2,6 +2,7 @@ const account = require('./whatsapi/account.js');
 const chats = require('./whatsapi/chats.js');
 const contacts = require('./whatsapi/contacts.js');
 const instances = require('./instances.js');
+const { write } = require('../utils/log.js');
 
 class Manager {
   /**
@@ -59,22 +60,28 @@ class Chats {
   }
 
   async all() {
-    const chats = await chats.get.all(this.parent.payload());
-    if (Array.isArray(chats)) {
-      for (const chat of chats) {
-        if (chat.profile_picture === null) {
-          try {
-           const picture = await this.parent.contacts.picture({ number: chat.id.user });
-           if (typeof picture === 'object' && picture !== null && typeof picture.src === 'string' && picture.src.length !== '') {
-            chat.profile_picture = picture.src;
-           }
-          } catch (error) {
-            //
+    write('manager.chats.all', 'start');
+    try {
+      const chats = await chats.get.all(this.parent.payload());
+      write('manager.chats.all', 'raw', [typeof chats, chats]);
+      if (Array.isArray(chats)) {
+        for (const chat of chats) {
+          if (chat.profile_picture === null) {
+            const picture = await this.parent.contacts.picture({ number: chat.id.user });
+            if (typeof picture === 'object' && picture !== null && typeof picture.src === 'string' && picture.src.length !== '') {
+              chat.profile_picture = picture.src;
+            }
+            
           }
         }
+      } else {
+        write('manager.chats.all', 'wrong.api.response');
       }
+      return chats;
+    } catch (error) {
+      write('manager.chats.all', 'error', error);
     }
-    return chats;
+    return [];
   }
 
   async one(payload) {
