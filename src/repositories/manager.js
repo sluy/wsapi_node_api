@@ -59,7 +59,22 @@ class Chats {
   }
 
   async all() {
-    return await chats.get.all(this.parent.payload());
+    const chats = await chats.get.all(this.parent.payload());
+    if (Array.isArray(chats)) {
+      for (const chat of chats) {
+        if (chat.profile_picture === null) {
+          try {
+           const picture = await this.parent.contacts.picture({ number: chat.id.user });
+           if (typeof picture === 'object' && picture !== null && typeof picture.src === 'string' && picture.src.length !== '') {
+            chat.profile_picture = picture.src;
+           }
+          } catch (error) {
+            //
+          }
+        }
+      }
+    }
+    return chats;
   }
 
   async one(payload) {
