@@ -117,24 +117,50 @@ class Messages {
   }
   
   async search(payload) {
-    const all = this.all(payload);
+    const all = await this.all(payload);
     const found = [];
-    const search = injectVars(payload.search, this.parent.payload(payload));
-    if (search !== '' && Array.isArray(all)) {
+    const search = injectVars(payload.search, this.parent.payload(payload)).toLowerCase();
+    if (Array.isArray(all)) {
+      if (search === '') {
+          return all;
+      }
       for (const current of all) {
-        if (typeof current.body === 'string' && current.body.contains(payload.search)) {
-          found.push(current);
-        }
+            if (typeof current.body === 'string' && current.body.toLowerCase().indexOf(search) !== -1) {
+              found.push(current);
+            }
       }
     }
     return found;
   }
 
   async templates() {
-    return await db('wsapi_config')
-      .whereIn([1, this.parent.client_id])
-      .whereLike('key', 'template.%')
-      .orderBy('key', 'asc');
+    const all = await await db("wsapi_config")
+            .where("client_id", 1)
+            .whereLike('key', 'templates.%')
+            .orderBy('info', 'asc');
+    const res = [];
+    if (Array.isArray(all)) {
+        for (const current of all) {
+            if (typeof current === 'object' && current !== null && typeof current.value === 'string' && current.value !== '') {
+                try {
+                    const template = JSON.parse(current.value);
+                    if (typeof template === 'object' && template !== null && template.type === 'text' && typeof template.message === 'string' && template.message !== '') {
+                        res.push({
+                            id: current.id,
+                            client_id: current.client_id,
+                            key: current.key,
+                            value: template,
+                            info: current.info,
+                        });
+                    }
+                } catch (e) {
+                    //ignore
+                }
+            }   
+            
+        }
+    }
+    return res;
   }
 
   async all(payload) {
