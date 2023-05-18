@@ -64,9 +64,10 @@ async function parse(raw) {
 }
 
 async function createMainInstance(clientId) {
+  const client = await db('clientes').where('id', clientId).first();
   const res = create(
     config.instances.default.name,
-    config.instances.default.info,
+    (client) ? client.nombre : config.instances.default.info,
     clientId
   );
   if (res === "instance.create.error.name.exists") {
