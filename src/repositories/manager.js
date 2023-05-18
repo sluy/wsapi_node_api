@@ -5,6 +5,7 @@ const instances = require('./instances.js');
 const { write } = require('../utils/log.js');
 const { db } = require('../bootstrap/db.js');
 const knex = require('knex');
+const { injectVars } = require('../utils/parsers.js');
 
 class Manager {
   /**
@@ -61,6 +62,7 @@ class Chats {
     this.parent = parent;
   }
 
+
   async all() {
     const res = [];
     try {
@@ -74,11 +76,6 @@ class Chats {
             
             current.services = await db('servicios').where('cliente_id', this.parent.instance.client_id).whereRaw(where);
             
-            
-            
-
-
-
             /** Funciona, pero ralentiza la respuesta MUCHO.
             if (current.profile_picture === null) {
               try {
@@ -119,6 +116,27 @@ class Messages {
     this.parent = parent;
   }
   
+  async search(payload) {
+    const all = this.all(payload);
+    const found = [];
+    const search = injectVars(payload.search, this.parent.payload(payload));
+    if (search !== '' && Array.isArray(all)) {
+      for (const current of all) {
+        if (typeof current.body === 'string' && current.body.contains(payload.search)) {
+          found.push(current);
+        }
+      }
+    }
+    return found;
+  }
+
+  async templates() {
+    return await db('wsapi_config')
+      .whereIn([1, this.parent.client_id])
+      .whereLike('key', 'template.%')
+      .orderBy('key', 'asc');
+  }
+
   async all(payload) {
     return await chats.message.all(this.parent.payload(payload));
   }
