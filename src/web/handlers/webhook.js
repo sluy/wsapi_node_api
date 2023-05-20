@@ -56,7 +56,7 @@ const allAction = async (req, res) => {
   const eventName = client.id + ".wsapi.webhook." + data.type;
   io.emit(eventName, data);
   data.emit = eventName;
-  const globalEventName = client.id + 'wsapi.webhook';
+  const globalEventName = client.id + '.wsapi.webhook';
   //Emitimos el evento global (sólo {id}.wsapi.webhook).
   io.emit(globalEventName, data);
   
