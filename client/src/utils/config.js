@@ -2,7 +2,7 @@ export default {
   client_id: parseInt(document.getElementById('wsapi_app').dataset.clientId.trim()),
   //apiUrl: 'http://127.0.0.1:8000'
   api: {
-    url: 'http://wp.neo.fo',
+    url: 'https://wp.neo.fo',
     secret: '',
     proxy: {
       status: true,

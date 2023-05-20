@@ -19,3 +19,13 @@ export function getQueryFromUrl(url) {
 export function getQueryFromCurrentUrl() {
   return getQueryFromUrl(window.location.href)
 }
+
+
+export function redirectToMain(sleep) {
+  const url = window.location.protocol + "//" + window.location.host;
+
+  setTimeout(() => {
+    window.location.href = url;
+  }, sleep ? sleep : 200);
+}
+

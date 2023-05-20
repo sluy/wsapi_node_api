@@ -5,6 +5,7 @@ import { socket } from '../utils/io';
 import { api } from '../utils/api';
 
 import config from '../utils/config';
+import { redirectToMain } from '../utils/url';
 
 const props = defineProps({
   instance: Object,
@@ -36,6 +37,7 @@ const QR = ref(null);
 const done = () => {
   console.log('emitiendo loaded');
   emit('loaded', props.instance);
+  redirectToMain();
 }
 
 const loadQR = async () => {

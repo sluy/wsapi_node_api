@@ -102,7 +102,7 @@ defineExpose({
 })
 </script>
 <template>
-  <div class="max-w-sm overflow-hidden shadow-xl bg-white" style="border: 1px solid #e2e2e2;">
+  <div class="overflow-hidden shadow-xl bg-white" style="border: 1px solid #e2e2e2;">
     <div class="px-6 py-4">
       <div class="font-bold text-xl mb-2">{{ props.instance.name }}</div>
       <p class="text-gray-400 text-base">
@@ -120,14 +120,13 @@ defineExpose({
         >
         conectar
       </button>
-      <button v-else
+      <button v-else-if="1 === 0"
         class="bg-green-500 text-white active:bg-green-600 font-bold uppercase text-xs px-4 py-2 shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button"
         @click="refreshAndOpenQR()"
         >
         reconectar
       </button>
-      <button
-        v-show="!isMainInstance"
+      <button v-else
         class="bg-red-500 text-white active:bg-red-600 font-bold uppercase text-xs px-4 py-2 shadow hover:shadow-md outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150" type="button"
         @click="$event => dropModal = true"
         >
