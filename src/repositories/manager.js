@@ -291,7 +291,7 @@ Manager.exec = async(instanceId, clientId, call, payload) => {
     return i;
   }
   const err = 'instance.exec.error.call.invalid';
-  if (typeof call !== 'string' || call.trim() === '') {
+  if (!i || typeof call !== 'string' || call.trim() === '') {
     return err;
   }
   const tmp = call.trim().split('.');

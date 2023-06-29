@@ -8,8 +8,23 @@ const postAction = async (req, res) => {
     }
     return res.status(200).json({ status: true, data });
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({ status: false, error }); 
+    const payload = {
+        status: false,
+        message: 'unknown error',
+        error: null,
+        stack: null,
+    }
+    if (typeof error === 'object' && error !== null) {
+        if (typeof error.message === 'string') {
+            payload.message = error.message;
+        }
+        payload.error = JSON.parse(JSON.stringify(error));
+        if (error instanceof Error) {
+            payload.stack = typeof error.stack === 'string' && error.stack !=='' ? error.stack.split('\n').map((v) => v.trim()) : error.stack;
+            payload.name = error.name;
+        }
+    }
+    return res.status(500).json(payload); 
   }
 }
 

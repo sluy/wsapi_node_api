@@ -33,7 +33,7 @@ const get = {
       return res.data;
     } catch (error) {
       console.log(error);
-      return `${node}.error.api.internal`;
+      return `${node}.error.api.internal ${error.message}`;
     }
   },
 
