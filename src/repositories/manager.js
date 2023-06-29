@@ -185,7 +185,7 @@ class Messages {
   }
 
   async filter(payload) {
-    const all = chats.message.all(this.parent.payload(payload));
+    const all =this.all(this.parent.payload(payload));
 
     if (typeof all === 'string') {
       return all;
