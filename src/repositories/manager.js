@@ -163,7 +163,7 @@ class Messages {
     return res;
   }
   async media(payload) {
-    const all = chats.message.all(this.parent.payload(payload));
+    const all = await chats.message.all(this.parent.payload(payload));
     const compare = payload.message_id;
     
     if (typeof all === 'string') {
@@ -177,11 +177,11 @@ class Messages {
             src: `data:${datatype.value};base64,${current.attachmentData.data}`
           };
         } else {
-          return 'message.media.invalid';
+          return 'message.media.invalid: ' + JSON.stringify(payload);
         }
       }
     }
-    return 'message.media.not_found';
+    return 'message.media.not_found:' + JSON.stringify(payload);
   }
 
   async filter(payload) {
@@ -203,7 +203,7 @@ class Messages {
     if (type === 'all') {
       return all;
     }
-    return `not.implemented.yet ${type}`;
+    return `not.implemented.yet:` + JSON.stringify(payload);
   }
 
   async all(payload) {
