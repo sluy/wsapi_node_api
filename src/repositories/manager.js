@@ -162,6 +162,44 @@ class Messages {
     }
     return res;
   }
+  async media(payload) {
+    const all = chats.message.all(this.parent.payload(payload));
+    const compare = payload.message_id;
+    
+    if (typeof all === 'string') {
+      return all;
+    }
+    for (const current of all) {
+      if (current.id._serialized === compare) {
+        if (typeof current.attachmentData === 'object' && current.attachmentData !== null && typeof current.attachmentData.data === 'string') {
+          return {
+            mimetype: current.attachmentData.mimetype,
+            src: `data:${datatype.value};base64,${current.attachmentData.data}`
+          };
+        } else {
+          return 'message.media.invalid';
+        }
+      }
+    }
+    return 'message.media.not_found';
+  }
+
+  async filter(payload) {
+    const all = chats.message.all(this.parent.payload(payload));
+    if (typeof all === 'string') {
+      return all;
+    }
+    for (const current of all) {
+      if (typeof current.attachmentData === 'object' && current.attachmentData !== null) {
+        current.attachmentData.data = null;
+      }
+    }
+
+    if (payload.type === 'all') {
+      return all;
+    }
+    return 'not.implemented.yet';
+  }
 
   async all(payload) {
     return await chats.message.all(this.parent.payload(payload));
