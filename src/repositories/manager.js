@@ -177,7 +177,7 @@ class Messages {
         if (typeof current.attachmentData === 'object' && current.attachmentData !== null && typeof current.attachmentData.data === 'string') {
           return {
             mimetype: current.attachmentData.mimetype,
-            src: `data:${datatype.value};base64,${current.attachmentData.data}`
+            src: `data:${current.attachmentData.mimetype};base64,${current.attachmentData.data}`
           };
         } else {
           return 'message.media.invalid: ' + JSON.stringify(payload);
