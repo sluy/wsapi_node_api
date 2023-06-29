@@ -198,7 +198,7 @@ class Messages {
       return JSON.stringify(all);
     }
     for (const current of all) {
-      if (typeof current.attachmentData === 'object' && current.attachmentData !== null && !current.attachmentData.mimetype.mime.startsWith('image/')) {
+      if (typeof current.attachmentData === 'object' && current.attachmentData !== null && typeof current.attachmentData.mimetype === 'string' && !current.attachmentData.mimetype.startsWith('image/')) {
         current.attachmentData.data = null;
       }
     }
