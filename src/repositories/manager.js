@@ -163,7 +163,7 @@ class Messages {
     return res;
   }
   async media(payload) {
-    const all = await chats.message.all(this.parent.payload(payload));
+    const all = await this.all(payload);
     const compare = payload.message_id;
     
     if (typeof all === 'string') {
