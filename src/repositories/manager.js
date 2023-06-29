@@ -186,8 +186,12 @@ class Messages {
 
   async filter(payload) {
     const all = chats.message.all(this.parent.payload(payload));
+
     if (typeof all === 'string') {
       return all;
+    }
+    if (!Array.isArray(all)) {
+      return JSON.stringify(all);
     }
     for (const current of all) {
       if (typeof current.attachmentData === 'object' && current.attachmentData !== null) {
