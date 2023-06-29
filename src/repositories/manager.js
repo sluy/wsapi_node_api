@@ -185,6 +185,7 @@ class Messages {
   }
 
   async filter(payload) {
+    const type = payload.type;
     const all = await this.all(payload);
 
     if (typeof all === 'string') {
@@ -199,10 +200,10 @@ class Messages {
       }
     }
 
-    if (payload.type === 'all') {
+    if (type === 'all') {
       return all;
     }
-    return 'not.implemented.yet';
+    return `not.implemented.yet ${type}`;
   }
 
   async all(payload) {
