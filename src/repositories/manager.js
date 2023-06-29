@@ -169,7 +169,10 @@ class Messages {
     if (typeof all === 'string') {
       return all;
     }
+
+    const log = [];
     for (const current of all) {
+      log.push(`${current.id._serialized} == ${compare}? ` + (current.id._serialized === compare) ? ' true ' : ' false ');
       if (current.id._serialized === compare) {
         if (typeof current.attachmentData === 'object' && current.attachmentData !== null && typeof current.attachmentData.data === 'string') {
           return {
@@ -181,7 +184,7 @@ class Messages {
         }
       }
     }
-    return 'message.media.not_found:' + JSON.stringify(payload);
+    return 'message.media.not_found:' + JSON.stringify(log);
   }
 
   async filter(payload) {
