@@ -185,7 +185,7 @@ class Messages {
   }
 
   async filter(payload) {
-    const all =this.all(this.parent.payload(payload));
+    const all = await this.all(payload);
 
     if (typeof all === 'string') {
       return all;
