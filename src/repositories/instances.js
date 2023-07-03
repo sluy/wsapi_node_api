@@ -77,7 +77,7 @@ async function createMainInstance(clientId) {
 }
 
 async function dropAllExpired() {
-  const all = await db("wsapi_instances").whereNotNull("secret").whereNot('secret', '').where('connected', 0);
+  const all = await db("wsapi_instances").whereNot('module', 'waziper').whereNotNull("secret").whereNot('secret', '').where('connected', 0);
   for (const current of all) {
     try {
       await dropIfExpired(current);  
@@ -143,6 +143,7 @@ async function dropIfExpired(instance) {
 async function all(clientId) {
   await createMainInstance(clientId);
   const instances = await db("wsapi_instances")
+    .whereNot('module', 'waziper')
     .where("client_id", clientId)
     .orderBy("name", "asc");
   return await parse(instances);
@@ -199,6 +200,7 @@ async function update(search, name, info, clientId) {
     return "instance.update.error.name.invalid";
   }
   const exists = await db("wsapi_instances")
+    .whereNot('module', 'waziper')
     .where("client_id", clientId)
     .where("name", name)
     .first();
